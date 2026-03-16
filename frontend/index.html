@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoIntel - Plateforme d'analyse automobile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-car text-3xl"></i>
+                    <h1 class="text-2xl font-bold">AutoIntel</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#accueil" class="hover:text-purple-200 transition">Accueil</a>
+                    <a href="#fonctionnalites" class="hover:text-purple-200 transition">Fonctionnalités</a>
+                    <a href="#estimation" class="hover:text-purple-200 transition">Estimation</a>
+                    <a href="#dashboard" class="hover:text-purple-200 transition">Dashboard</a>
+                </nav>
+                <button class="bg-white text-purple-600 px-4 py-2 rounded-lg font-semibold hover:bg-purple-50 transition">
+                    Connexion
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="accueil" class="gradient-bg text-white py-20">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-5xl font-bold mb-6">L'intelligence artificielle au service de l'automobile</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">
+                Estimez le prix de votre véhicule avec précision, détectez les bonnes affaires et analysez les tendances du marché automobile.
+            </p>
+            <div class="space-x-4">
+                <button class="bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-purple-50 transition">
+                    Commencer gratuitement
+                </button>
+                <button class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition">
+                    Voir la démo
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="fonctionnalites" class="py-20">
+        <div class="container mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-12">Fonctionnalités principales</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-8 card-hover">
+                    <div class="text-purple-600 text-4xl mb-4">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Estimation par IA</h3>
+                    <p class="text-gray-600">
+                        Notre algorithme de machine learning analyse des milliers d'annonces pour vous donner une estimation précise de votre véhicule.
+                    </p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-8 card-hover">
+                    <div class="text-purple-600 text-4xl mb-4">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Scraping Intelligent</h3>
+                    <p class="text-gray-600">
+                        Collecte automatique des annonces des principales plateformes pour une analyse en temps réel du marché.
+                    </p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-8 card-hover">
+                    <div class="text-purple-600 text-4xl mb-4">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Dashboard Analytique</h3>
+                    <p class="text-gray-600">
+                        Visualisez les tendances du marché, les prix moyens et les meilleures opportunités d'achat.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Estimation Section -->
+    <section id="estimation" class="py-20 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-12">Estimez votre véhicule</h2>
+            <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
+                <form id="estimationForm" class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Marque</label>
+                            <select class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                                <option>Peugeot</option>
+                                <option>Renault</option>
+                                <option>Volkswagen</option>
+                                <option>BMW</option>
+                                <option>Mercedes</option>
+                                <option>Audi</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Modèle</label>
+                            <input type="text" placeholder="ex: 208, Clio, Golf" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Année</label>
+                            <input type="number" placeholder="ex: 2020" min="2000" max="2024" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Kilométrage</label>
+                            <input type="number" placeholder="ex: 50000" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Carburant</label>
+                            <select class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                                <option>Essence</option>
+                                <option>Diesel</option>
+                                <option>Électrique</option>
+                                <option>Hybride</option>
+                                <option>GPL</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Boîte de vitesse</label>
+                            <select class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                                <option>Manuelle</option>
+                                <option>Automatique</option>
+                                <option>Séquentielle</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition">
+                        Estimer le prix
+                    </button>
+                </form>
+                <div id="estimationResult" class="hidden mt-8 p-6 bg-purple-50 rounded-lg">
+                    <h3 class="text-xl font-bold text-purple-800 mb-4">Résultat de l'estimation</h3>
+                    <div class="grid md:grid-cols-3 gap-4 text-center">
+                        <div>
+                            <p class="text-gray-600">Prix estimé</p>
+                            <p class="text-2xl font-bold text-purple-600">15 000 €</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Fourchette basse</p>
+                            <p class="text-xl font-semibold">12 750 €</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Fourchette haute</p>
+                            <p class="text-xl font-semibold">17 250 €</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Preview -->
+    <section id="dashboard" class="py-20">
+        <div class="container mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-12">Dashboard Analytique</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-600">Annonces analysées</h3>
+                        <i class="fas fa-car text-purple-600 text-2xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold">12,453</p>
+                    <p class="text-green-600 text-sm">+12% ce mois</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-600">Estimations réalisées</h3>
+                        <i class="fas fa-chart-line text-purple-600 text-2xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold">3,892</p>
+                    <p class="text-green-600 text-sm">+8% ce mois</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-600">Bonnes affaires</h3>
+                        <i class="fas fa-tag text-purple-600 text-2xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold">147</p>
+                    <p class="text-green-600 text-sm">+23% ce mois</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-600">Utilisateurs actifs</h3>
+                        <i class="fas fa-users text-purple-600 text-2xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold">892</p>
+                    <p class="text-green-600 text-sm">+15% ce mois</p>
+                </div>
+            </div>
+            
+            <!-- Charts Preview -->
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h3 class="text-xl font-bold mb-6">Évolution des prix</h3>
+                    <div class="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-area text-6xl text-gray-400"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h3 class="text-xl font-bold mb-6">Répartition par marque</h3>
+                    <div class="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-pie text-6xl text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fas fa-car text-2xl"></i>
+                        <h3 class="text-xl font-bold">AutoIntel</h3>
+                    </div>
+                    <p class="text-gray-400">
+                        L'intelligence artificielle au service de l'automobile.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Produit</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">Estimation</a></li>
+                        <li><a href="#" class="hover:text-white transition">Dashboard</a></li>
+                        <li><a href="#" class="hover:text-white transition">Alertes</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Ressources</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">Documentation</a></li>
+                        <li><a href="#" class="hover:text-white transition">API</a></li>
+                        <li><a href="#" class="hover:text-white transition">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Contact</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><i class="fas fa-envelope mr-2"></i>contact@autointel.fr</li>
+                        <li><i class="fas fa-phone mr-2"></i>+33 1 234 567 890</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 AutoIntel. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Estimation form
+        document.getElementById('estimationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('estimationResult').classList.remove('hidden');
+            document.getElementById('estimationResult').scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
