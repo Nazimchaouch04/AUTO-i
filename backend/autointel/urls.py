@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
+from django.shortcuts import redirect
 from rest_framework_simplejwt.views import (
     TokenObtainPairView, TokenRefreshView, TokenVerifyView
 )
@@ -23,9 +24,13 @@ def api_root(request):
         }
     })
 
+def admin_dashboard_redirect(request):
+    return redirect('/admin/')
+
 urlpatterns = [
     path('', api_root, name='api_root'),
     path('admin/', admin.site.urls),
+    path('admin-dashboard/', admin_dashboard_redirect),
 
     # Authentication (JWT)
     path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain'),

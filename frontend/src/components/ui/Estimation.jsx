@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { 
-  Search, Zap, Fuel, Settings, MapPin, Calendar, Gauge, 
+  Search, Zap, Fuel, Leaf, Settings, Calendar, 
   Loader2, ChevronDown, RotateCcw, ExternalLink, Sparkles,
   TrendingUp, TrendingDown, X
 } from 'lucide-react'
+import { useDispatch, useSelector } from 'react-redux'
+import { addEstimation } from '../../store/estimationHistorySlice'
 
 const COLORS = {
   accent: '#6C63FF',
@@ -45,10 +47,10 @@ const REGIONS = [
 ]
 
 const CARBURANTS = [
-  { id: 'essence', name: 'Essence', icon: '⛽', color: '#F59E0B' },
-  { id: 'diesel', name: 'Diesel', icon: '🛢️', color: '#374151' },
-  { id: 'electrique', name: 'Électrique', icon: '⚡', color: '#00D4AA' },
-  { id: 'hybride', name: 'Hybride', icon: '🍃', color: '#10B981' }
+  { id: 'essence', name: 'Essence', Icon: Fuel, color: '#F59E0B' },
+  { id: 'diesel', name: 'Diesel', Icon: Fuel, color: '#64748B' },
+  { id: 'electrique', name: 'Électrique', Icon: Zap, color: '#00D4AA' },
+  { id: 'hybride', name: 'Hybride', Icon: Leaf, color: '#10B981' }
 ]
 
 // Hook de count-up animation
@@ -83,7 +85,7 @@ const AutoCoinToast = ({ show, onClose }) => {
     if (show) {
       const timer = setTimeout(() => {
         onClose()
-      }, 4000)
+      }, 3000)
       return () => clearTimeout(timer)
     }
   }, [show, onClose])
@@ -158,12 +160,20 @@ const HistoryCard = ({ estimation, onReuse }) => {
       </div>
       <div className="flex items-center justify-between text-xs text-primary-text-secondary">
         <span>{dateRelative()}</span>
-        <button 
-          onClick={() => onReuse(estimation)}
-          className="flex items-center gap-1 text-accent hover:underline"
-        >
-          <RotateCcw className="w-3 h-3" /> Réutiliser
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => onReuse(estimation)}
+            className="flex items-center gap-1 text-accent hover:underline"
+          >
+            <RotateCcw className="w-3 h-3" /> Réutiliser
+          </button>
+          <a
+            href={`/annonces?marque=${encodeURIComponent(estimation.vehicule?.marque || '')}&modele=${encodeURIComponent(estimation.vehicule?.modele || '')}`}
+            className="flex items-center gap-1 text-primary-text-secondary hover:text-primary-text-primary"
+          >
+            Similaires <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
       </div>
     </div>
   )
@@ -173,7 +183,8 @@ export default function Estimation({ onSubmit, showResult, data }) {
   const [formData, setFormData] = useState({
     marque: '',
     modele: '',
-    annee: 2020,
+    anneeMin: 2018,
+    anneeMax: 2020,
     kilometrage: 50000,
     carburant: 'essence',
     boite: 'manuelle',
@@ -185,13 +196,8 @@ export default function Estimation({ onSubmit, showResult, data }) {
   const [showMarqueDropdown, setShowMarqueDropdown] = useState(false)
   const [estimationResult, setEstimationResult] = useState(null)
   const [showCoinToast, setShowCoinToast] = useState(false)
-  const [history, setHistory] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('estimation_history')
-      return saved ? JSON.parse(saved) : []
-    }
-    return []
-  })
+  const dispatch = useDispatch()
+  const history = useSelector(state => state.estimationHistory.items)
   
   const marqueDropdownRef = useRef(null)
   const { value: animatedPrice, startAnimation } = useCountUp(estimationResult?.prix_estime || 0, 1200)
@@ -207,13 +213,6 @@ export default function Estimation({ onSubmit, showResult, data }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Persistance historique
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('estimation_history', JSON.stringify(history))
-    }
-  }, [history])
-
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     if (field === 'marque') {
@@ -222,9 +221,34 @@ export default function Estimation({ onSubmit, showResult, data }) {
   }
 
   const calculerKmAn = () => {
-    const age = 2025 - formData.annee
+    const anneeUsed = Math.round((formData.anneeMin + formData.anneeMax) / 2)
+    const age = 2025 - anneeUsed
     if (age <= 0) return formData.kilometrage
     return Math.round(formData.kilometrage / age)
+  }
+
+  const getAgeLabel = () => {
+    const minAge = Math.max(0, 2025 - formData.anneeMax)
+    const maxAge = Math.max(0, 2025 - formData.anneeMin)
+    if (minAge === maxAge) return `Il y a ${minAge} ans`
+    return `Entre ${minAge} et ${maxAge} ans`
+  }
+
+  // Slider kilométrage logarithmique
+  const KM_MIN = 0
+  const KM_MAX = 300000
+  const sliderToKm = (v) => {
+    const t = Math.min(1, Math.max(0, v / 1000))
+    if (t === 0) return 0
+    const maxLog = Math.log10(KM_MAX + 1)
+    const km = Math.pow(10, t * maxLog) - 1
+    return Math.min(KM_MAX, Math.max(KM_MIN, Math.round(km)))
+  }
+  const kmToSlider = (km) => {
+    const safe = Math.min(KM_MAX, Math.max(0, km))
+    if (safe === 0) return 0
+    const maxLog = Math.log10(KM_MAX + 1)
+    return Math.round((Math.log10(safe + 1) / maxLog) * 1000)
   }
 
   const getCategoriePuissance = (cv) => {
@@ -256,7 +280,17 @@ export default function Estimation({ onSubmit, showResult, data }) {
       const response = await fetch('/api/estimation/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          marque: formData.marque,
+          modele: formData.modele,
+          annee_min: formData.anneeMin,
+          annee_max: formData.anneeMax,
+          kilometrage: formData.kilometrage,
+          carburant: formData.carburant,
+          boite: formData.boite,
+          puissance: formData.puissance,
+          pays: formData.region,
+        })
       })
       
       let result
@@ -266,7 +300,8 @@ export default function Estimation({ onSubmit, showResult, data }) {
         // Fallback estimation locale
         const prixBase = { peugeot: 15000, renault: 14000, volkswagen: 18000, bmw: 25000, mercedes: 28000, audi: 24000, citroen: 13000, toyota: 16000, ford: 14500 }
         const basePrice = prixBase[formData.marque] || 15000
-        const age = 2025 - formData.annee
+        const anneeUsed = Math.round((formData.anneeMin + formData.anneeMax) / 2)
+        const age = 2025 - anneeUsed
         const ageFactor = Math.max(0.3, 1 - (age * 0.08))
         const kmFactor = formData.kilometrage > 100000 ? Math.max(0.5, 1 - ((formData.kilometrage - 100000) / 100000)) : 1.0
         const carburantFactor = formData.carburant === 'electrique' ? 1.15 : formData.carburant === 'hybride' ? 1.1 : 1
@@ -278,7 +313,7 @@ export default function Estimation({ onSubmit, showResult, data }) {
           prix_estime: estimatedPrice,
           fourchette_basse: Math.round(estimatedPrice * 0.85),
           fourchette_haute: Math.round(estimatedPrice * 1.15),
-          fiabilite: age < 5 ? 85 : age < 10 ? 75 : 65,
+          fiabilite: age < 5 ? 'Haute' : age < 10 ? 'Moyenne' : 'Faible',
           score_confiance: age < 5 ? 88 : age < 10 ? 72 : 60,
           nb_annonces: Math.floor(Math.random() * 500) + 50,
           facteurs: [
@@ -286,7 +321,19 @@ export default function Estimation({ onSubmit, showResult, data }) {
             { name: 'Kilométrage', impact: formData.kilometrage > 100000 ? -8 : +3 },
             { name: 'Région', impact: formData.region === 'FR' ? +5 : -3 }
           ],
-          vehicule: formData
+          vehicule: {
+            marque: formData.marque,
+            modele: formData.modele,
+            annee: anneeUsed,
+            annee_min: formData.anneeMin,
+            annee_max: formData.anneeMax,
+            kilometrage: formData.kilometrage,
+            carburant: formData.carburant,
+            boite: formData.boite,
+            puissance: formData.puissance,
+            region: formData.region,
+            pays: formData.region,
+          }
         }
       }
       
@@ -299,7 +346,7 @@ export default function Estimation({ onSubmit, showResult, data }) {
         prix_estime: result.prix_estime,
         vehicule: result.vehicule
       }
-      setHistory(prev => [historyEntry, ...prev.slice(0, 4)])
+      dispatch(addEstimation(historyEntry))
       
       onSubmit(result)
       
@@ -320,7 +367,19 @@ export default function Estimation({ onSubmit, showResult, data }) {
   }
 
   const handleReuse = (estimation) => {
-    setFormData(estimation.vehicule)
+    const v = estimation.vehicule || {}
+    setFormData(prev => ({
+      ...prev,
+      marque: v.marque || '',
+      modele: v.modele || '',
+      anneeMin: v.annee_min ?? v.anneeMin ?? 2018,
+      anneeMax: v.annee_max ?? v.anneeMax ?? (v.annee ?? 2020),
+      kilometrage: v.kilometrage ?? prev.kilometrage,
+      carburant: v.carburant ?? prev.carburant,
+      boite: v.boite ?? prev.boite,
+      puissance: v.puissance ?? prev.puissance,
+      region: v.region ?? v.pays ?? prev.region,
+    }))
     setEstimationResult(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -331,7 +390,14 @@ export default function Estimation({ onSubmit, showResult, data }) {
 
   const modelesDisponibles = MODELES_PAR_MARQUE[formData.marque] || []
 
-  const isFormValid = formData.marque && formData.modele && formData.annee >= 2000
+  const isFormValid = (
+    formData.marque &&
+    formData.modele &&
+    formData.anneeMin >= 2000 &&
+    formData.anneeMax <= 2025 &&
+    formData.anneeMin <= formData.anneeMax &&
+    formData.kilometrage >= 0
+  )
 
   const catPuissance = getCategoriePuissance(formData.puissance)
 
@@ -441,25 +507,49 @@ export default function Estimation({ onSubmit, showResult, data }) {
                 {/* Année slider double */}
                 <div>
                   <label className="block text-sm font-medium text-primary-text-secondary mb-2">
-                    Année <span className="text-accent font-bold ml-2">{formData.annee}</span>
-                    <span className="text-xs text-primary-text-secondary ml-2">(Il y a {2025 - formData.annee} ans)</span>
+                    Année
+                    <span className="text-accent font-bold ml-2">{formData.anneeMin} - {formData.anneeMax}</span>
+                    <span className="text-xs text-primary-text-secondary ml-2">({getAgeLabel()})</span>
                   </label>
-                  <input
-                    type="range"
-                    min="2000"
-                    max="2025"
-                    value={formData.annee}
-                    onChange={(e) => handleChange('annee', parseInt(e.target.value))}
-                    className="w-full h-2 bg-primary-elevated rounded-lg appearance-none cursor-pointer accent-accent"
-                  />
+                  <div className="relative h-8">
+                    <input
+                      type="range"
+                      min="2000"
+                      max="2025"
+                      value={formData.anneeMin}
+                      onChange={(e) => handleChange('anneeMin', Math.min(parseInt(e.target.value), formData.anneeMax))}
+                      className="absolute w-full h-2 top-3 bg-primary-elevated rounded-lg appearance-none cursor-pointer accent-accent"
+                    />
+                    <input
+                      type="range"
+                      min="2000"
+                      max="2025"
+                      value={formData.anneeMax}
+                      onChange={(e) => handleChange('anneeMax', Math.max(parseInt(e.target.value), formData.anneeMin))}
+                      className="absolute w-full h-2 top-3 bg-transparent rounded-lg appearance-none cursor-pointer accent-accent"
+                    />
+                  </div>
                   <div className="flex justify-between text-xs text-primary-text-secondary mt-1">
                     <span>2000</span>
-                    <input
-                      type="number"
-                      value={formData.annee}
-                      onChange={(e) => handleChange('annee', parseInt(e.target.value) || 2020)}
-                      className="w-20 px-2 py-1 bg-primary-elevated border border-primary-border rounded text-center text-primary-text-primary"
-                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={formData.anneeMin}
+                        min="2000"
+                        max="2025"
+                        onChange={(e) => handleChange('anneeMin', Math.min(parseInt(e.target.value) || 2000, formData.anneeMax))}
+                        className="w-20 px-2 py-1 bg-primary-elevated border border-primary-border rounded text-center text-primary-text-primary"
+                      />
+                      <span>—</span>
+                      <input
+                        type="number"
+                        value={formData.anneeMax}
+                        min="2000"
+                        max="2025"
+                        onChange={(e) => handleChange('anneeMax', Math.max(parseInt(e.target.value) || 2025, formData.anneeMin))}
+                        className="w-20 px-2 py-1 bg-primary-elevated border border-primary-border rounded text-center text-primary-text-primary"
+                      />
+                    </div>
                     <span>2025</span>
                   </div>
                 </div>
@@ -473,10 +563,10 @@ export default function Estimation({ onSubmit, showResult, data }) {
                   <input
                     type="range"
                     min="0"
-                    max="300000"
-                    step="1000"
-                    value={formData.kilometrage}
-                    onChange={(e) => handleChange('kilometrage', parseInt(e.target.value))}
+                    max="1000"
+                    step="1"
+                    value={kmToSlider(formData.kilometrage)}
+                    onChange={(e) => handleChange('kilometrage', sliderToKm(parseInt(e.target.value)))}
                     className="w-full h-2 bg-primary-elevated rounded-lg appearance-none cursor-pointer accent-accent"
                   />
                   <div className="flex justify-between text-xs text-primary-text-secondary mt-1">
@@ -484,7 +574,9 @@ export default function Estimation({ onSubmit, showResult, data }) {
                     <input
                       type="number"
                       value={formData.kilometrage}
-                      onChange={(e) => handleChange('kilometrage', parseInt(e.target.value) || 0)}
+                      min="0"
+                      max="300000"
+                      onChange={(e) => handleChange('kilometrage', Math.min(300000, Math.max(0, parseInt(e.target.value) || 0)))}
                       className="w-24 px-2 py-1 bg-primary-elevated border border-primary-border rounded text-center text-primary-text-primary"
                     />
                     <span>300k+ km</span>
@@ -516,7 +608,7 @@ export default function Estimation({ onSubmit, showResult, data }) {
                             : 'border-primary-border hover:border-primary-text-secondary'
                         }`}
                       >
-                        <span className="text-2xl">{carburant.icon}</span>
+                        <carburant.Icon className="w-6 h-6" style={{ color: carburant.color }} />
                         <span className="text-sm font-medium text-primary-text-primary">{carburant.name}</span>
                       </button>
                     ))}
@@ -528,30 +620,20 @@ export default function Estimation({ onSubmit, showResult, data }) {
                   <label className="block text-sm font-medium text-primary-text-secondary mb-3">
                     Boîte de vitesse
                   </label>
-                  <div className="flex items-center bg-primary-elevated rounded-xl p-1">
+                  <div className="flex items-center justify-between bg-primary-elevated rounded-xl px-4 py-3">
+                    <span className="text-sm font-medium text-primary-text-primary">Manuelle</span>
                     <button
                       type="button"
-                      onClick={() => handleChange('boite', 'manuelle')}
-                      className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all ${
-                        formData.boite === 'manuelle'
-                          ? 'bg-accent text-white'
-                          : 'text-primary-text-secondary hover:text-primary-text-primary'
-                      }`}
+                      role="switch"
+                      aria-checked={formData.boite === 'automatique'}
+                      onClick={() => handleChange('boite', formData.boite === 'automatique' ? 'manuelle' : 'automatique')}
+                      className={`relative w-12 h-7 rounded-full transition-colors ${formData.boite === 'automatique' ? 'bg-accent' : 'bg-primary-bg/95'}`}
                     >
-                      Manuelle
+                      <span
+                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${formData.boite === 'automatique' ? 'translate-x-5' : ''}`}
+                      />
                     </button>
-                    <div className="w-px h-6 bg-primary-border" />
-                    <button
-                      type="button"
-                      onClick={() => handleChange('boite', 'automatique')}
-                      className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all ${
-                        formData.boite === 'automatique'
-                          ? 'bg-accent text-white'
-                          : 'text-primary-text-secondary hover:text-primary-text-primary'
-                      }`}
-                    >
-                      Automatique
-                    </button>
+                    <span className="text-sm font-medium text-primary-text-primary">Automatique</span>
                   </div>
                 </div>
 
@@ -649,6 +731,15 @@ export default function Estimation({ onSubmit, showResult, data }) {
                         transform: 'translate(-50%, -50%)'
                       }}
                     />
+                    <div
+                      className="absolute -top-8 px-3 py-1 bg-primary-card border border-primary-border rounded-full text-xs text-primary-text-primary"
+                      style={{
+                        left: `${((estimationResult.prix_estime - estimationResult.fourchette_basse) / (estimationResult.fourchette_haute - estimationResult.fourchette_basse)) * 100}%`,
+                        transform: 'translateX(-50%)'
+                      }}
+                    >
+                      ● Prix estimé
+                    </div>
                     <div className="absolute -bottom-6 left-0 text-xs text-success">
                       {estimationResult.fourchette_basse.toLocaleString()}€
                     </div>
@@ -679,11 +770,11 @@ export default function Estimation({ onSubmit, showResult, data }) {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-primary-text-secondary">Fiabilité</span>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      estimationResult.fiabilite >= 80 ? 'bg-success/20 text-success' :
-                      estimationResult.fiabilite >= 60 ? 'bg-warning/20 text-warning' :
+                      estimationResult.fiabilite === 'Haute' ? 'bg-success/20 text-success' :
+                      estimationResult.fiabilite === 'Moyenne' ? 'bg-warning/20 text-warning' :
                       'bg-danger/20 text-danger'
                     }`}>
-                      {estimationResult.fiabilite >= 80 ? 'Haute' : estimationResult.fiabilite >= 60 ? 'Moyenne' : 'Faible'}
+                      {estimationResult.fiabilite}
                     </span>
                   </div>
                   

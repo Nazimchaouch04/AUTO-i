@@ -1,20 +1,9 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 3000,
-    host: true
-  },
-  css: {
-    postcss: {
-      plugins: {
-        tailwindcss: {},
-        autoprefixer: {},
-      },
-    },
-  },
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {
       colors: {
@@ -49,5 +38,6 @@ export default defineConfig({
         'accent': '0 4px 12px rgba(108, 99, 255, 0.25)'
       }
     }
-  }
-})
+  },
+  plugins: [],
+}

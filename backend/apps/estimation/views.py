@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from .models import EstimationHistory
 from .serializers import EstimationHistorySerializer, EstimationRequestSerializer
 
@@ -66,53 +66,99 @@ def estimate_price(marque, modele, annee, kilometrage, carburant, pays):
 
 
 class EstimationViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
-    @action(detail=False, methods=['post'])
-    def estimate(self, request):
+    def _resolve_annee(self, data):
+        annee = data.get('annee')
+        if annee is not None:
+            return annee
+        annee_min = data.get('annee_min')
+        annee_max = data.get('annee_max')
+        if annee_min is None or annee_max is None:
+            return 2020
+        return int(round((annee_min + annee_max) / 2))
+
+    def create(self, request):
+        """POST /api/estimation/ (frontend)."""
         serializer = EstimationRequestSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         data = serializer.validated_data
+
+        annee_used = self._resolve_annee(data)
         result = estimate_price(
-            data['marque'], data['modele'], data['annee'],
+            data['marque'], data['modele'], annee_used,
             data['kilometrage'], data['carburant'], data.get('pays', 'DZ')
         )
 
-        # Sauvegarde l'estimation en base
-        estimation = EstimationHistory.objects.create(
-            user=request.user,
-            marque=data['marque'],
-            modele=data['modele'],
-            annee=data['annee'],
-            kilometrage=data['kilometrage'],
-            carburant=data['carburant'],
-            boite=data.get('boite', ''),
-            puissance=data.get('puissance'),
-            pays=data.get('pays', 'DZ'),
-            prix_estime=result['prix_estime'],
-            fourchette_basse=result['fourchette_basse'],
-            fourchette_haute=result['fourchette_haute'],
-            fiabilite=result['fiabilite'],
-            nb_annonces_reference=result['nb_annonces_reference'],
-        )
+        # Save estimation only when authenticated
+        estimation_id = None
+        if getattr(request, 'user', None) is not None and request.user.is_authenticated:
+            estimation = EstimationHistory.objects.create(
+                user=request.user,
+                marque=data['marque'],
+                modele=data['modele'],
+                annee=annee_used,
+                kilometrage=data['kilometrage'],
+                carburant=data['carburant'],
+                boite=data.get('boite', ''),
+                puissance=data.get('puissance'),
+                pays=data.get('pays', 'DZ'),
+                prix_estime=result['prix_estime'],
+                fourchette_basse=result['fourchette_basse'],
+                fourchette_haute=result['fourchette_haute'],
+                fiabilite=result['fiabilite'],
+                nb_annonces_reference=result['nb_annonces_reference'],
+            )
+            estimation_id = estimation.id
 
-        # Ajoute 50 AutoCoins au profil de gamification
-        try:
-            from apps.gamification.models import ProfilJoueur
-            profil = request.user.profil
-            profil.add_coins(50)
-            profil.add_xp(100)
-        except:
-            pass
+            # Reward coins / xp (best-effort)
+            try:
+                profil = request.user.profil
+                profil.add_coins(50)
+                profil.add_xp(100)
+            except Exception:
+                pass
+
+        # Map to frontend-friendly schema
+        nb = result.get('nb_annonces_reference') or 0
+        fiabilite_label = 'Haute' if nb >= 10 else 'Moyenne' if nb >= 5 else 'Faible'
+        score_confiance = 90 if nb >= 10 else 75 if nb >= 5 else 60
 
         return Response({
-            **result,
-            'estimation_id': estimation.id,
+            'prix_estime': result['prix_estime'],
+            'fourchette_basse': result['fourchette_basse'],
+            'fourchette_haute': result['fourchette_haute'],
+            'fiabilite': fiabilite_label,
+            'score_confiance': score_confiance,
+            'nb_annonces': nb,
+            'facteurs': [
+                {'name': f.get('label', ''), 'impact': f.get('impact', 0)}
+                for f in (result.get('facteurs') or [])
+            ],
+            'vehicule': {
+                'marque': data['marque'],
+                'modele': data['modele'],
+                'annee': annee_used,
+                'annee_min': data.get('annee_min'),
+                'annee_max': data.get('annee_max'),
+                'kilometrage': data['kilometrage'],
+                'carburant': data['carburant'],
+                'boite': data.get('boite', ''),
+                'puissance': data.get('puissance'),
+                'region': data.get('pays', 'DZ'),
+                'pays': data.get('pays', 'DZ'),
+            },
+            'estimation_id': estimation_id,
             'ac_reward': 50,
             'xp_reward': 100,
         }, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['post'])
+    def estimate(self, request):
+        """Backward compatible endpoint: POST /api/estimation/estimate/"""
+        return self.create(request)
 
     @action(detail=False, methods=['get'])
     def history(self, request):
