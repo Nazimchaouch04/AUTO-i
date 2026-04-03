@@ -23,9 +23,8 @@ def test_database_connection():
         print("📋 Tables:", ", ".join(table_names))
         
         # Test Django's database connection
-        from django.db import connections
         from django.core.management import execute_from_command_line
-        connections['default'].ensure_connection()
+        connection.ensure_connection()
         print("✅ Django database connection verified")
         
         return True

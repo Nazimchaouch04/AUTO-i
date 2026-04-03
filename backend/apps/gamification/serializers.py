@@ -1,5 +1,20 @@
 from rest_framework import serializers
-from .models import ProfilJoueur, Transaction, Defi, DefiJoueur
+from .models import ProfilJoueur, Transaction, Defi, DefiJoueur, BoutiqueItem, AchatJoueur
+
+
+class BoutiqueItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BoutiqueItem
+        fields = ['id', 'nom', 'description', 'prix_ac', 'image_url', 'slug', 'created_at']
+
+
+class AchatJoueurSerializer(serializers.ModelSerializer):
+    item_details = BoutiqueItemSerializer(source='item', read_only=True)
+
+    class Meta:
+        model = AchatJoueur
+        fields = ['id', 'item', 'item_details', 'date_achat']
+        read_only_fields = ['id', 'date_achat', 'item_details']
 
 
 class ProfilJoueurSerializer(serializers.ModelSerializer):

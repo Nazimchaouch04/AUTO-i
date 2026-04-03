@@ -1,771 +1,546 @@
-import React, { useState, useEffect } from 'react'
-import { Search, Filter, ChevronDown, Heart, Eye, MapPin, Calendar, Fuel, Settings, Grid, List, SlidersHorizontal, X, Check, Star, Clock, TrendingUp, Car } from 'lucide-react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { 
+  Search, Filter, Heart, Eye, MapPin, Calendar, Fuel, 
+  Grid, List, SlidersHorizontal, X, Check, Star, 
+  TrendingUp, Car, ChevronLeft, ChevronRight,
+  Gauge, Zap, Info, ArrowUpDown, Trash2
+} from 'lucide-react';
+import { debounce } from 'lodash';
 
-export default function Annonces() {
-  const [annonces, setAnnonces] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [sortBy, setSortBy] = useState('date_publication')
-  const [viewMode, setViewMode] = useState('grid')
-  const [favorites, setFavorites] = useState([])
-  const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0 })
-  const [filters, setFilters] = useState({
-    marque: '',
-    modele: '',
-    prix_min: '',
-    prix_max: '',
-    km_max: '',
-    annee_min: '',
-    annee_max: '',
-    carburant: '',
-    boite_vitesse: '',
-    categorie: '',
-    departement: '',
-    puissance_min: '',
-    puissance_max: '',
-    couleur: '',
-    critair: '',
-    garantie: false,
-    controle_technique: false,
-    premiere_main: false,
-    non_fumeur: false
-  })
-  const [showFilters, setShowFilters] = useState(false)
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
-  const [selectedAnnonces, setSelectedAnnonces] = useState([])
+// --- Sub-components ---
 
-  useEffect(() => {
-    fetchAnnonces()
-  }, [])
-
-  const fetchAnnonces = async () => {
-    setLoading(true)
-    try {
-      // Connexion à l'API Django
-      const response = await fetch('http://127.0.0.1:8000/api/annonces/')
-      if (!response.ok) throw new Error('Failed to fetch annonces')
-      
-      const data = await response.json()
-      
-      // Transformer les données pour correspondre au format attendu
-      const transformedAnnonces = data.map(annonce => ({
-        id: annonce.id,
-        titre: annonce.titre,
-        prix: annonce.prix,
-        prix_estime: annonce.prix_estime || Math.round(annonce.prix * 1.15),
-        kilometrage: annonce.kilometrage,
-        annee: annonce.annee,
-        carburant: annonce.carburant,
-        boite_vitesse: annonce.boite_vitesse,
-        marque_nom: annonce.marque_nom || 'Peugeot',
-        modele_nom: annonce.modele_nom || '208',
-        ville: annonce.ville || 'Paris',
-        departement: annonce.departement || '75',
-        images: annonce.images || ['/images/peugeot208-1.jpg'],
-        est_bonne_affaire: annonce.est_bonne_affaire || false,
-        pourcentage_economie: annonce.pourcentage_economie || 0,
-        date_publication: annonce.date_publication || '2024-01-15',
-        categorie: annonce.categorie || 'citadine',
-        puissance: annonce.puissance || 130,
-        couleur: annonce.couleur || 'Noir',
-        description: annonce.description || '',
-        vue_count: annonce.vue_count || Math.floor(Math.random() * 1000)
-      }))
-      
-      setAnnonces(transformedAnnonces)
-      setPagination(prev => ({ ...prev, total: transformedAnnonces.length }))
-    } catch (error) {
-      console.error('Error fetching annonces:', error)
-      // Fallback vers données simulées
-      const mockData = [
-        {
-          id: 1,
-          titre: 'Peugeot 208 GT Line 2021',
-          prix: 18500,
-          prix_estime: 22000,
-          kilometrage: 25000,
-          annee: 2021,
-          carburant: 'essence',
-          boite_vitesse: 'manuelle',
-          marque_nom: 'Peugeot',
-          modele_nom: '208',
-          ville: 'Paris',
-          departement: '75',
-          images: ['/images/peugeot208-1.jpg'],
-          est_bonne_affaire: true,
-          pourcentage_economie: 19,
-          date_publication: '2024-01-15',
-          categorie: 'citadine',
-          puissance: 130,
-          couleur: 'Noir',
-          description: 'Magnifique Peugeot 208 GT Line',
-          vue_count: 1234
-        },
-        {
-          id: 2,
-          titre: 'BMW Série 3 2020',
-          prix: 28900,
-          prix_estime: 31500,
-          kilometrage: 45000,
-          annee: 2020,
-          carburant: 'diesel',
-          boite_vitesse: 'automatique',
-          marque_nom: 'BMW',
-          modele_nom: 'Série 3',
-          ville: 'Lyon',
-          departement: '69',
-          images: ['/images/bmw3-1.jpg'],
-          est_bonne_affaire: true,
-          pourcentage_economie: 8,
-          date_publication: '2024-01-14',
-          categorie: 'berline',
-          puissance: 190,
-          couleur: 'Blanc',
-          description: 'BMW Série 3 très bien entretenue',
-          vue_count: 856
-        },
-        {
-          id: 3,
-          titre: 'Renault Clio 2022',
-          prix: 15400,
-          prix_estime: 17500,
-          kilometrage: 15000,
-          annee: 2022,
-          carburant: 'essence',
-          boite_vitesse: 'manuelle',
-          marque_nom: 'Renault',
-          modele_nom: 'Clio',
-          ville: 'Marseille',
-          departement: '13',
-          images: ['/images/clio-1.jpg'],
-          est_bonne_affaire: true,
-          pourcentage_economie: 12,
-          date_publication: '2024-01-13',
-          categorie: 'citadine',
-          puissance: 90,
-          couleur: 'Gris',
-          description: 'Renault Clio récente',
-          vue_count: 623
-        }
-      ]
-      setAnnonces(mockData)
-      setPagination(prev => ({ ...prev, total: mockData.length }))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }))
-    setPagination(prev => ({ ...prev, page: 1 }))
-  }
-
-  const resetFilters = () => {
-    setFilters({
-      marque: '',
-      modele: '',
-      prix_min: '',
-      prix_max: '',
-      km_max: '',
-      annee_min: '',
-      annee_max: '',
-      carburant: '',
-      boite_vitesse: '',
-      categorie: '',
-      departement: '',
-      puissance_min: '',
-      puissance_max: '',
-      couleur: '',
-      critair: '',
-      garantie: false,
-      controle_technique: false,
-      premiere_main: false,
-      non_fumeur: false
-    })
-    setSearchTerm('')
-    setPagination(prev => ({ ...prev, page: 1 }))
-  }
-
-  const toggleFavorite = (annonceId) => {
-    setFavorites(prev => 
-      prev.includes(annonceId) 
-        ? prev.filter(id => id !== annonceId)
-        : [...prev, annonceId]
-    )
-  }
-
-  const toggleSelection = (annonceId) => {
-    setSelectedAnnonces(prev => 
-      prev.includes(annonceId) 
-        ? prev.filter(id => id !== annonceId)
-        : [...prev, annonceId]
-    )
-  }
-
-  const getActiveFiltersCount = () => {
-    return Object.values(filters).filter(value => 
-      value !== '' && value !== false && value !== null
-    ).length
-  }
-
-  const filteredAnnonces = annonces.filter(annonce => {
-    // Recherche textuelle
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase()
-      if (!annonce.titre.toLowerCase().includes(searchLower) &&
-          !annonce.marque_nom.toLowerCase().includes(searchLower) &&
-          !annonce.modele_nom.toLowerCase().includes(searchLower) &&
-          !annonce.description.toLowerCase().includes(searchLower)) {
-        return false
-      }
-    }
-    
-    // Filtres standards
-    if (filters.marque && !annonce.marque_nom.toLowerCase().includes(filters.marque.toLowerCase())) return false
-    if (filters.modele && !annonce.modele_nom.toLowerCase().includes(filters.modele.toLowerCase())) return false
-    if (filters.prix_min && annonce.prix < parseInt(filters.prix_min)) return false
-    if (filters.prix_max && annonce.prix > parseInt(filters.prix_max)) return false
-    if (filters.km_max && annonce.kilometrage > parseInt(filters.km_max)) return false
-    if (filters.annee_min && annonce.annee < parseInt(filters.annee_min)) return false
-    if (filters.annee_max && annonce.annee > parseInt(filters.annee_max)) return false
-    if (filters.carburant && annonce.carburant !== filters.carburant) return false
-    if (filters.boite_vitesse && annonce.boite_vitesse !== filters.boite_vitesse) return false
-    if (filters.categorie && annonce.categorie !== filters.categorie) return false
-    if (filters.departement && annonce.departement !== filters.departement) return false
-    if (filters.puissance_min && annonce.puissance < parseInt(filters.puissance_min)) return false
-    if (filters.puissance_max && annonce.puissance > parseInt(filters.puissance_max)) return false
-    if (filters.couleur && !annonce.couleur.toLowerCase().includes(filters.couleur.toLowerCase())) return false
-    
-    return true
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case 'prix_asc':
-        return a.prix - b.prix
-      case 'prix_desc':
-        return b.prix - a.prix
-      case 'km_asc':
-        return a.kilometrage - b.kilometrage
-      case 'km_desc':
-        return b.kilometrage - a.kilometrage
-      case 'annee_desc':
-        return b.annee - a.annee
-      case 'economie':
-        return b.pourcentage_economie - a.pourcentage_economie
-      case 'popularite':
-        return b.vue_count - a.vue_count
-      default: // date_publication
-        return new Date(b.date_publication) - new Date(a.date_publication)
-    }
-  })
-
-  // Pagination
-  const paginatedAnnonces = filteredAnnonces.slice(
-    (pagination.page - 1) * pagination.limit,
-    pagination.page * pagination.limit
-  )
-
+const Badge = ({ children, color = 'accent' }) => {
+  const colors = {
+    accent: 'bg-accent/10 text-accent border-accent/20',
+    success: 'bg-success/10 text-success border-success/20',
+    warning: 'bg-warning/10 text-warning border-warning/20',
+    danger: 'bg-danger/10 text-danger border-danger/20',
+    secondary: 'bg-primary-elevated text-primary-text-secondary border-primary-border/DEFAULT'
+  };
   return (
-    <div className="min-h-screen bg-primary-bg pt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary-text-primary mb-2">Annonces automobiles</h1>
-          <p className="text-primary-text-secondary">Découvrez notre sélection de véhicules d'occasion</p>
-        </div>
+    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${colors[color]}`}>
+      {children}
+    </span>
+  );
+};
 
-        {/* Barre de recherche et filtres avancés */}
-        <div className="bg-primary-card border border-primary-border/DEFAULT rounded-xl p-6 mb-8">
-          {/* Barre de recherche principale */}
-          <div className="flex flex-col lg:flex-row gap-4 mb-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-primary-text-secondary" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Rechercher une marque, un modèle, une description..."
-                  className="w-full pl-10 pr-4 py-3 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary placeholder-primary-text-secondary focus:outline-none focus:border-accent"
-                />
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                  getActiveFiltersCount() > 0
-                    ? 'bg-accent text-white'
-                    : 'bg-primary-elevated border border-primary-border/DEFAULT text-primary-text-primary hover:bg-primary-card'
-                }`}
-              >
-                <Filter className="w-5 h-5" />
-                <span>Filtres</span>
-                {getActiveFiltersCount() > 0 && (
-                  <span className="bg-accent-secondary text-white text-xs px-2 py-1 rounded-full">
-                    {getActiveFiltersCount()}
-                  </span>
-                )}
-                <ChevronDown className={`w-4 h-4 transform transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {/* Sélecteur de vue */}
-              <div className="flex items-center border border-primary-border/DEFAULT rounded-lg">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-accent text-white' : 'text-primary-text-secondary hover:bg-primary-elevated'} transition-colors duration-200`}
-                >
-                  <Grid className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 ${viewMode === 'list' ? 'bg-accent text-white' : 'text-primary-text-secondary hover:bg-primary-elevated'} transition-colors duration-200`}
-                >
-                  <List className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Filtres avancés */}
-          {showFilters && (
-            <div className="space-y-6 pt-4 border-t border-primary-border/DEFAULT">
-              {/* Filtres de base */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-primary-text-secondary mb-2">Marque</label>
-                  <input
-                    type="text"
-                    value={filters.marque}
-                    onChange={(e) => handleFilterChange('marque', e.target.value)}
-                    placeholder="Ex: Peugeot"
-                    className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary placeholder-primary-text-secondary focus:outline-none focus:border-accent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-primary-text-secondary mb-2">Modèle</label>
-                  <input
-                    type="text"
-                    value={filters.modele}
-                    onChange={(e) => handleFilterChange('modele', e.target.value)}
-                    placeholder="Ex: 208"
-                    className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary placeholder-primary-text-secondary focus:outline-none focus:border-accent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-primary-text-secondary mb-2">Catégorie</label>
-                  <select
-                    value={filters.categorie}
-                    onChange={(e) => handleFilterChange('categorie', e.target.value)}
-                    className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary focus:outline-none focus:border-accent"
-                  >
-                    <option value="">Toutes</option>
-                    <option value="citadine">Citadine</option>
-                    <option value="compact">Compact</option>
-                    <option value="berline">Berline</option>
-                    <option value="suv">SUV</option>
-                    <option value="monospace">Monospace</option>
-                    <option value="utilitaire">Utilitaire</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-primary-text-secondary mb-2">Carburant</label>
-                  <select
-                    value={filters.carburant}
-                    onChange={(e) => handleFilterChange('carburant', e.target.value)}
-                    className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary focus:outline-none focus:border-accent"
-                  >
-                    <option value="">Tous</option>
-                    <option value="essence">Essence</option>
-                    <option value="diesel">Diesel</option>
-                    <option value="electrique">Électrique</option>
-                    <option value="hybride">Hybride</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Prix et kilométrage */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-primary-text-secondary mb-2">Prix min</label>
-                  <input
-                    type="number"
-                    value={filters.prix_min}
-                    onChange={(e) => handleFilterChange('prix_min', e.target.value)}
-                    placeholder="0€"
-                    className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary placeholder-primary-text-secondary focus:outline-none focus:border-accent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-primary-text-secondary mb-2">Prix max</label>
-                  <input
-                    type="number"
-                    value={filters.prix_max}
-                    onChange={(e) => handleFilterChange('prix_max', e.target.value)}
-                    placeholder="50000€"
-                    className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary placeholder-primary-text-secondary focus:outline-none focus:border-accent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-primary-text-secondary mb-2">Kilométrage max</label>
-                  <input
-                    type="number"
-                    value={filters.km_max}
-                    onChange={(e) => handleFilterChange('km_max', e.target.value)}
-                    placeholder="100000 km"
-                    className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary placeholder-primary-text-secondary focus:outline-none focus:border-accent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-primary-text-secondary mb-2">Département</label>
-                  <input
-                    type="text"
-                    value={filters.departement}
-                    onChange={(e) => handleFilterChange('departement', e.target.value)}
-                    placeholder="75"
-                    className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary placeholder-primary-text-secondary focus:outline-none focus:border-accent"
-                  />
-                </div>
-              </div>
-
-              {/* Filtres avancés */}
-              <div>
-                <button
-                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                  className="flex items-center space-x-2 text-primary-text-secondary hover:text-primary-text-primary transition-colors duration-200 mb-4"
-                >
-                  <SlidersHorizontal className="w-4 h-4" />
-                  <span>Filtres avancés</span>
-                  <ChevronDown className={`w-4 h-4 transform transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {showAdvancedFilters && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-primary-text-secondary mb-2">Année min</label>
-                      <input
-                        type="number"
-                        value={filters.annee_min}
-                        onChange={(e) => handleFilterChange('annee_min', e.target.value)}
-                        placeholder="2018"
-                        className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary placeholder-primary-text-secondary focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-primary-text-secondary mb-2">Année max</label>
-                      <input
-                        type="number"
-                        value={filters.annee_max}
-                        onChange={(e) => handleFilterChange('annee_max', e.target.value)}
-                        placeholder="2024"
-                        className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary placeholder-primary-text-secondary focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-primary-text-secondary mb-2">Puissance min (ch)</label>
-                      <input
-                        type="number"
-                        value={filters.puissance_min}
-                        onChange={(e) => handleFilterChange('puissance_min', e.target.value)}
-                        placeholder="90"
-                        className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary placeholder-primary-text-secondary focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-primary-text-secondary mb-2">Couleur</label>
-                      <input
-                        type="text"
-                        value={filters.couleur}
-                        onChange={(e) => handleFilterChange('couleur', e.target.value)}
-                        placeholder="Noir"
-                        className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary placeholder-primary-text-secondary focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-4">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={filters.garantie}
-                      onChange={(e) => handleFilterChange('garantie', e.target.checked)}
-                      className="w-4 h-4 text-accent bg-primary-elevated border-primary-border/DEFAULT rounded focus:ring-accent"
-                    />
-                    <span className="text-primary-text-primary">Garantie</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={filters.premiere_main}
-                      onChange={(e) => handleFilterChange('premiere_main', e.target.checked)}
-                      className="w-4 h-4 text-accent bg-primary-elevated border-primary-border/DEFAULT rounded focus:ring-accent"
-                    />
-                    <span className="text-primary-text-primary">Première main</span>
-                  </label>
-                </div>
-                <button
-                  onClick={resetFilters}
-                  className="flex items-center space-x-2 px-4 py-2 border border-primary-border/DEFAULT rounded-lg text-primary-text-secondary hover:bg-primary-elevated transition-colors duration-200"
-                >
-                  <X className="w-4 h-4" />
-                  <span>Réinitialiser</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Résultats et tri */}
-        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-          <div className="flex items-center space-x-4">
-            <p className="text-primary-text-secondary">
-              <span className="font-bold text-primary-text-primary">{filteredAnnonces.length}</span> annonce{filteredAnnonces.length > 1 ? 's' : ''} trouvée{filteredAnnonces.length > 1 ? 's' : ''}
-            </p>
-            {selectedAnnonces.length > 0 && (
-              <span className="text-sm text-accent">
-                {selectedAnnonces.length} sélectionnée{selectedAnnonces.length > 1 ? 's' : ''}
-              </span>
-            )}
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <select 
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 bg-primary-card border border-primary-border/DEFAULT rounded-lg text-primary-text-primary focus:outline-none focus:border-accent"
-            >
-              <option value="date_publication">Plus récentes</option>
-              <option value="prix_asc">Prix croissant</option>
-              <option value="prix_desc">Prix décroissant</option>
-              <option value="km_asc">Kilométrage croissant</option>
-              <option value="km_desc">Kilométrage décroissant</option>
-              <option value="annee_desc">Année décroissante</option>
-              <option value="economie">Meilleures affaires</option>
-              <option value="popularite">Plus populaires</option>
-            </select>
-            
-            {selectedAnnonces.length > 1 && (
-              <button className="px-4 py-2 bg-accent hover:bg-accent-secondary text-white rounded-lg font-medium transition-colors duration-200">
-                Comparer ({selectedAnnonces.length})
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Grid des annonces */}
-        {loading ? (
-          <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'space-y-4'} gap-6`}>
-            {[...Array(6)].map((_, index) => (
-              <div key={index} className="bg-primary-card border border-primary-border/DEFAULT rounded-xl overflow-hidden animate-pulse-slow">
-                <div className="h-48 bg-primary-elevated"></div>
-                <div className="p-4">
-                  <div className="h-6 bg-primary-elevated rounded mb-2"></div>
-                  <div className="h-4 bg-primary-elevated rounded mb-4"></div>
-                  <div className="h-8 bg-primary-elevated rounded"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : paginatedAnnonces.length === 0 ? (
-          <div className="bg-primary-card border border-primary-border/DEFAULT rounded-xl p-12 text-center">
-            <Car className="w-16 h-16 text-primary-text-secondary mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-primary-text-primary mb-2">Aucune annonce trouvée</h3>
-            <p className="text-primary-text-secondary mb-6">
-              {searchTerm || getActiveFiltersCount() > 0 
-                ? 'Essayez de modifier vos critères de recherche'
-                : 'Aucune annonce disponible pour le moment'
-              }
-            </p>
-            {(searchTerm || getActiveFiltersCount() > 0) && (
-              <button
-                onClick={resetFilters}
-                className="bg-accent hover:bg-accent-secondary text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
-              >
-                Réinitialiser les filtres
-              </button>
-            )}
-          </div>
-        ) : (
-          <>
-            <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'space-y-4'} gap-6`}>
-              {paginatedAnnonces.map((annonce) => (
-                <div key={annonce.id} className="bg-primary-card border border-primary-border/DEFAULT rounded-xl overflow-hidden hover:shadow-card-hover transition-all duration-300 group">
-                  {/* Header carte */}
-                  <div className="relative">
-                    {/* Badge bonne affaire */}
-                    {annonce.est_bonne_affaire && (
-                      <div className="absolute top-2 left-2 bg-success text-white text-xs font-bold px-2 py-1 rounded-full z-10">
-                        Bonne affaire
-                      </div>
-                    )}
-                    
-                    {/* Checkbox sélection */}
-                    <div className="absolute top-2 right-2 z-10">
-                      <button
-                        onClick={() => toggleSelection(annonce.id)}
-                        className={`p-2 rounded-lg border transition-all duration-200 ${
-                          selectedAnnonces.includes(annonce.id)
-                            ? 'bg-accent border-accent text-white'
-                            : 'bg-white/90 border-primary-border/DEFAULT text-primary-text-secondary hover:bg-white'
-                        }`}
-                      >
-                        {selectedAnnonces.includes(annonce.id) && <Check className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    
-                    {/* Image */}
-                    <div className="relative h-48 bg-primary-elevated">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-6xl text-primary-text-secondary">🚗</div>
-                      </div>
-                      
-                      {/* Overlay avec actions */}
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center space-x-2">
-                        <button className="p-2 bg-white rounded-lg text-primary-text-primary hover:bg-accent hover:text-white transition-colors duration-200">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => toggleFavorite(annonce.id)}
-                          className={`p-2 rounded-lg transition-colors duration-200 ${
-                            favorites.includes(annonce.id)
-                              ? 'bg-accent text-white'
-                              : 'bg-white text-primary-text-primary hover:bg-accent hover:text-white'
-                          }`}
-                        >
-                          <Heart className={`w-4 h-4 ${favorites.includes(annonce.id) ? 'fill-current' : ''}`} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Contenu */}
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-primary-text-primary line-clamp-2">{annonce.titre}</h3>
-                      <button 
-                        onClick={() => toggleFavorite(annonce.id)}
-                        className={`ml-2 p-1 rounded transition-colors duration-200 ${
-                          favorites.includes(annonce.id)
-                            ? 'text-accent'
-                            : 'text-primary-text-secondary hover:text-accent'
-                        }`}
-                      >
-                        <Heart className={`w-4 h-4 ${favorites.includes(annonce.id) ? 'fill-current' : ''}`} />
-                      </button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-2xl font-bold text-primary-text-primary">{annonce.prix.toLocaleString()}€</span>
-                      {annonce.est_bonne_affaire && (
-                        <span className="text-sm text-success font-medium">-{annonce.pourcentage_economie}%</span>
-                      )}
-                    </div>
-                    
-                    {/* Caractéristiques */}
-                    <div className="grid grid-cols-2 gap-2 text-sm text-primary-text-secondary mb-3">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{annonce.annee}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Settings className="w-4 h-4" />
-                        <span>{(annonce.kilometrage / 1000).toFixed(0)}k km</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Fuel className="w-4 h-4" />
-                        <span className="capitalize">{annonce.carburant}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{annonce.ville}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Stats additionnelles */}
-                    <div className="flex items-center justify-between text-xs text-primary-text-secondary mb-3">
-                      <div className="flex items-center space-x-1">
-                        <Eye className="w-3 h-3" />
-                        <span>{annonce.vue_count}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="w-3 h-3" />
-                        <span>{new Date(annonce.date_publication).toLocaleDateString('fr-FR')}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Actions */}
-                    <div className="flex space-x-2">
-                      <button className="flex-1 bg-accent hover:bg-accent-secondary text-white py-2 rounded-lg font-medium transition-colors duration-200">
-                        Voir détails
-                      </button>
-                      <button className="p-2 border border-accent text-accent hover:bg-accent hover:text-white rounded-lg transition-all duration-200">
-                        <Heart className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Pagination */}
-            {pagination.total > pagination.limit && (
-              <div className="flex justify-center items-center space-x-2 mt-8">
-                <button
-                  onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
-                  disabled={pagination.page === 1}
-                  className="p-2 border border-primary-border/DEFAULT rounded-lg text-primary-text-secondary hover:bg-primary-elevated disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                
-                {Array.from({ length: Math.min(5, Math.ceil(pagination.total / pagination.limit)) }, (_, index) => {
-                  const pageNumber = index + 1
-                  const totalPages = Math.ceil(pagination.total / pagination.limit)
-                  const currentPage = pagination.page
-                  
-                  // Afficher les pages autour de la page actuelle
-                  let showPage = false
-                  if (totalPages <= 5) {
-                    showPage = true
-                  } else if (pageNumber === 1 || pageNumber === totalPages) {
-                    showPage = true
-                  } else if (Math.abs(pageNumber - currentPage) <= 1) {
-                    showPage = true
-                  }
-                  
-                  if (showPage) {
-                    return (
-                      <button
-                        key={pageNumber}
-                        onClick={() => setPagination(prev => ({ ...prev, page: pageNumber }))}
-                        className={`px-3 py-1 rounded-lg font-medium transition-colors duration-200 ${
-                          pagination.page === pageNumber
-                            ? 'bg-accent text-white'
-                            : 'border border-primary-border/DEFAULT text-primary-text-secondary hover:bg-primary-elevated'
-                        }`}
-                      >
-                        {pageNumber}
-                      </button>
-                    )
-                  }
-                  return null
-                })}
-                
-                <button
-                  onClick={() => setPagination(prev => ({ ...prev, page: Math.min(Math.ceil(prev.total / prev.limit), prev.page + 1) }))}
-                  disabled={pagination.page === Math.ceil(pagination.total / pagination.limit)}
-                  className="p-2 border border-primary-border/DEFAULT rounded-lg text-primary-text-secondary hover:bg-primary-elevated disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </>
-        )}
+const AnnonceSkeleton = () => (
+  <div className="bg-primary-card border border-primary-border/DEFAULT rounded-2xl overflow-hidden animate-pulse">
+    <div className="h-48 bg-primary-elevated" />
+    <div className="p-5 space-y-4">
+      <div className="h-6 bg-primary-elevated rounded w-3/4" />
+      <div className="h-8 bg-primary-elevated rounded w-1/2" />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="h-4 bg-primary-elevated rounded" />
+        <div className="h-4 bg-primary-elevated rounded" />
       </div>
     </div>
-  )
+  </div>
+);
+
+const PriceComparisonBar = ({ price, estimated }) => {
+  if (!estimated) return null;
+  const diff = estimated - price;
+  const pct = (diff / estimated) * 100;
+  const isGood = diff > 0;
+  
+  return (
+    <div className="mt-4 pt-4 border-t border-primary-border/DEFAULT">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-[11px] text-primary-text-secondary uppercase font-bold tracking-tight">Analyse de prix</span>
+        <span className={`text-xs font-bold ${isGood ? 'text-success' : 'text-danger'}`}>
+          {isGood ? `-${Math.abs(pct).toFixed(1)}% sous le marché` : `+${Math.abs(pct).toFixed(1)}% au dessus`}
+        </span>
+      </div>
+      <div className="h-1.5 bg-primary-elevated rounded-full overflow-hidden flex">
+        <div 
+          className={`h-full transition-all duration-500 ${isGood ? 'bg-success' : 'bg-danger'}`}
+          style={{ width: `${Math.min(Math.max(50 + (pct * 2), 5), 95)}%` }}
+        />
+      </div>
+      <div className="flex justify-between mt-1 text-[10px] text-primary-text-secondary">
+        <span>Prix Bas</span>
+        <span>Moyenne: {Math.round(estimated).toLocaleString()}€</span>
+        <span>Prix Haut</span>
+      </div>
+    </div>
+  );
+};
+
+// --- Main Component ---
+
+export default function Annonces() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { isAuthenticated } = useSelector((state) => state.user);
+  
+  // State
+  const [annonces, setAnnonces] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('grid');
+  const [favorites, setFavorites] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  // Derived Filters from URL
+  const filters = useMemo(() => ({
+    search: searchParams.get('search') || '',
+    marque: searchParams.get('marque') || '',
+    prix_min: searchParams.get('prix_min') || '',
+    prix_max: searchParams.get('prix_max') || '',
+    km_max: searchParams.get('km_max') || '',
+    annee_min: searchParams.get('annee_min') || '',
+    carburant: searchParams.get('carburant') || '',
+    boite: searchParams.get('boite') || '',
+    pays: searchParams.get('pays') || '',
+    bonne_affaire: searchParams.get('bonne_affaire') === 'true',
+    sort: searchParams.get('sort') || '-date_publication',
+    page: parseInt(searchParams.get('page') || '1')
+  }), [searchParams]);
+
+  // Fetch Logic
+  const fetchAnnonces = useCallback(async () => {
+    setLoading(true);
+    const query = new URLSearchParams();
+    if (filters.search) query.append('search', filters.search);
+    if (filters.marque) query.append('vehicule__marque', filters.marque);
+    if (filters.prix_min) query.append('prix__gte', filters.prix_min);
+    if (filters.prix_max) query.append('prix__lte', filters.prix_max);
+    if (filters.km_max) query.append('kilometrage__lte', filters.km_max);
+    if (filters.annee_min) query.append('annee__gte', filters.annee_min);
+    if (filters.carburant) query.append('carburant', filters.carburant);
+    if (filters.boite) query.append('boite', filters.boite);
+    if (filters.pays) query.append('pays', filters.pays);
+    if (filters.bonne_affaire) query.append('est_bonne_affaire', 'true');
+    query.append('ordering', filters.sort);
+    query.append('page', filters.page.toString());
+
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/annonces/?${query.toString()}`);
+      const data = await response.json();
+      setAnnonces(data.results || []);
+      setTotalCount(data.count || 0);
+    } catch (err) {
+      console.error("Failed to fetch annonces", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    fetchAnnonces();
+  }, [fetchAnnonces]);
+
+  // Handlers
+  const updateFilter = (updates) => {
+    const newParams = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === '' || value === null || value === false) {
+        newParams.delete(key);
+      } else {
+        newParams.set(key, value);
+      }
+    });
+    newParams.set('page', '1'); // Reset pagination on filter change
+    setSearchParams(newParams);
+  };
+
+  const toggleFavorite = async (id) => {
+    if (!isAuthenticated) return; // Add login modal logic?
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/annonces/${id}/toggle_favori/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
+      if (response.ok) {
+        setAnnonces(prev => prev.map(a => a.id === id ? { ...a, is_favorite: !a.is_favorite } : a));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const debouncedSearch = useMemo(() => debounce((val) => updateFilter({ search: val }), 500), []);
+
+  const activeFiltersCount = Object.keys(filters).filter(k => 
+    !['sort', 'page', 'search'].includes(k) && filters[k] !== '' && filters[k] !== false
+  ).length;
+
+  return (
+    <div className="min-h-screen bg-[#0D0D14] pt-24 pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div className="flex flex-col lg:flex-row gap-8">
+          
+          {/* Sidebar Filters */}
+          <aside className={`
+            lg:w-80 flex-shrink-0 space-y-6 
+            ${showMobileFilters ? 'fixed inset-0 z-[60] bg-[#0D0D14] p-6 overflow-y-auto' : 'hidden lg:block'}
+          `}>
+            <div className="flex items-center justify-between lg:hidden mb-6">
+              <h2 className="text-xl font-bold text-white">Filtres</h2>
+              <button onClick={() => setShowMobileFilters(false)}><X /></button>
+            </div>
+
+            <div className="bg-primary-card border border-primary-border/DEFAULT rounded-3xl p-6 space-y-8 sticky top-28">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal size={18} className="text-accent" />
+                  <span className="font-bold text-sm tracking-tight uppercase">Filtres Raffinés</span>
+                </div>
+                {activeFiltersCount > 0 && (
+                  <button 
+                    onClick={() => setSearchParams({})} 
+                    className="text-[10px] uppercase font-bold text-danger hover:underline"
+                  >
+                    Effacer ({activeFiltersCount})
+                  </button>
+                )}
+              </div>
+
+              {/* Marque */}
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-primary-text-secondary uppercase">Marque</label>
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-text-secondary" />
+                  <select 
+                    value={filters.marque}
+                    onChange={(e) => updateFilter({ marque: e.target.value })}
+                    className="w-full pl-9 pr-4 py-3 bg-primary-elevated border border-primary-border/DEFAULT rounded-xl text-sm outline-none focus:border-accent transition-all appearance-none"
+                  >
+                    <option value="">Toutes les marques</option>
+                    <option value="Peugeot">Peugeot</option>
+                    <option value="Renault">Renault</option>
+                    <option value="BMW">BMW</option>
+                    <option value="Mercedes">Mercedes</option>
+                    <option value="Audi">Audi</option>
+                    <option value="Volkswagen">Volkswagen</option>
+                    <option value="Toyota">Toyota</option>
+                    <option value="Ford">Ford</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Prix Range */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-primary-text-secondary uppercase">Budget Max</label>
+                  <span className="text-sm font-bold text-accent">{filters.prix_max ? `${parseInt(filters.prix_max).toLocaleString()}€` : 'Illimité'}</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100000" 
+                  step="500"
+                  value={filters.prix_max || 100000}
+                  onChange={(e) => updateFilter({ prix_max: e.target.value === '100000' ? '' : e.target.value })}
+                  className="w-full accent-accent h-1.5 bg-primary-elevated rounded-lg appearance-none cursor-pointer"
+                />
+                <div className="flex gap-3">
+                  <input 
+                    type="number" 
+                    placeholder="Min"
+                    value={filters.prix_min}
+                    onChange={(e) => updateFilter({ prix_min: e.target.value })}
+                    className="w-1/2 bg-primary-elevated border border-primary-border/DEFAULT rounded-xl px-3 py-2 text-xs outline-none focus:border-accent"
+                  />
+                  <input 
+                    type="number" 
+                    placeholder="Max"
+                    value={filters.prix_max}
+                    onChange={(e) => updateFilter({ prix_max: e.target.value })}
+                    className="w-1/2 bg-primary-elevated border border-primary-border/DEFAULT rounded-xl px-3 py-2 text-xs outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+
+              {/* Carburant - Pills */}
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-primary-text-secondary uppercase">Carburant</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['essence', 'diesel', 'electrique', 'hybride'].map(type => (
+                    <button
+                      key={type}
+                      onClick={() => updateFilter({ carburant: filters.carburant === type ? '' : type })}
+                      className={`
+                        px-3 py-2 rounded-xl text-[11px] font-bold capitalize transition-all border
+                        ${filters.carburant === type 
+                          ? 'bg-accent border-accent text-white shadow-lg shadow-accent/20' 
+                          : 'bg-primary-elevated border-primary-border/DEFAULT text-primary-text-secondary hover:border-primary-text-secondary'}
+                      `}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Boite - Toggle */}
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-primary-text-secondary uppercase">Transmission</label>
+                <div className="flex bg-primary-elevated p-1 rounded-2xl border border-primary-border/DEFAULT">
+                   <button 
+                     onClick={() => updateFilter({ boite: 'manuelle' })}
+                     className={`flex-1 py-2 text-[11px] font-bold rounded-xl transition-all ${filters.boite === 'manuelle' ? 'bg-primary-card text-white shadow-sm' : 'text-primary-text-secondary'}`}
+                   >
+                     Manuelle
+                   </button>
+                   <button 
+                     onClick={() => updateFilter({ boite: 'automatique' })}
+                     className={`flex-1 py-2 text-[11px] font-bold rounded-xl transition-all ${filters.boite === 'automatique' ? 'bg-primary-card text-white shadow-sm' : 'text-primary-text-secondary'}`}
+                   >
+                     Automatique
+                   </button>
+                </div>
+              </div>
+
+              {/* Toggle Bonnes Affaires */}
+              <button 
+                onClick={() => updateFilter({ bonne_affaire: !filters.bonne_affaire })}
+                className={`
+                  w-full flex items-center justify-between p-4 rounded-2xl border transition-all
+                  ${filters.bonne_affaire 
+                    ? 'bg-success/5 border-success text-success shadow-lg shadow-success/10' 
+                    : 'bg-primary-elevated border-primary-border/DEFAULT text-primary-text-secondary'}
+                `}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${filters.bonne_affaire ? 'bg-success text-white' : 'bg-primary-card'}`}>
+                    <TrendingUp size={16} />
+                  </div>
+                  <span className="text-sm font-bold">Pépites Uniquement</span>
+                </div>
+                <div className={`w-8 h-4 rounded-full relative transition-colors ${filters.bonne_affaire ? 'bg-success' : 'bg-primary-border/20'}`}>
+                  <div className={`absolute top-1 w-2 h-2 bg-white rounded-full transition-all ${filters.bonne_affaire ? 'right-1' : 'left-1'}`} />
+                </div>
+              </button>
+              
+              <button 
+               onClick={() => setShowMobileFilters(false)}
+               className="lg:hidden w-full bg-accent text-white py-4 rounded-2xl font-bold"
+              >
+                Appliquer les filtres
+              </button>
+            </div>
+          </aside>
+
+          {/* Results Area */}
+          <main className="flex-1 space-y-6">
+            
+            {/* Top Bar */}
+            <div className="bg-primary-card border border-primary-border/DEFAULT rounded-3xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setShowMobileFilters(true)}
+                  className="lg:hidden p-3 bg-primary-elevated rounded-xl text-primary-text-secondary border border-primary-border/DEFAULT"
+                >
+                  <Filter size={20} />
+                </button>
+                <h1 className="text-xl font-black text-white">
+                  {loading ? 'Recherche...' : `${totalCount} véhicule${totalCount > 1 ? 's' : ''} trouvé${totalCount > 1 ? 's' : ''}`}
+                </h1>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center bg-primary-elevated rounded-xl p-1 border border-primary-border/DEFAULT">
+                  <button 
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary-card text-accent shadow-sm' : 'text-primary-text-secondary'}`}
+                  >
+                    <Grid size={18} />
+                  </button>
+                  <button 
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-primary-card text-accent shadow-sm' : 'text-primary-text-secondary'}`}
+                  >
+                    <List size={18} />
+                  </button>
+                </div>
+                
+                <select 
+                  value={filters.sort}
+                  onChange={(e) => updateFilter({ sort: e.target.value })}
+                  className="bg-primary-elevated border border-primary-border/DEFAULT rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-accent appearance-none pr-10 relative"
+                  style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23888\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'m6 9 6 6 6-6\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '16px' }}
+                >
+                  <option value="-date_publication">Plus récentes</option>
+                  <option value="prix">Prix croissant</option>
+                  <option value="-prix">Prix décroissant</option>
+                  <option value="kilometrage">Moins de km</option>
+                  <option value="-ecart_prix">Meilleures affaires</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Tags area */}
+            {activeFiltersCount > 0 && (
+              <div className="flex flex-wrap gap-2 animate-fade-in">
+                {Object.entries(filters).map(([key, value]) => {
+                  if (['sort', 'page', 'search'].includes(key) || !value || value === false) return null;
+                  return (
+                    <button 
+                      key={key}
+                      onClick={() => updateFilter({ [key]: '' })}
+                      className="group flex items-center gap-2 bg-accent/5 border border-accent/20 px-3 py-1.5 rounded-full text-[11px] font-bold text-accent hover:bg-accent/10 transition-all"
+                    >
+                      <span>{key.replace('_', ' ')}: {value.toString()}</span>
+                      <X size={12} className="opacity-50 group-hover:opacity-100" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* List/Grid Container */}
+            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
+              {loading ? (
+                Array(6).fill(0).map((_, i) => <AnnonceSkeleton key={i} />)
+              ) : annonces.length > 0 ? (
+                annonces.map((annonce) => (
+                  <div 
+                    key={annonce.id} 
+                    className={`
+                      group bg-primary-card border border-primary-border/DEFAULT rounded-[2rem] overflow-hidden 
+                      hover:border-accent/40 transition-all duration-500 shadow-xl shadow-transparent hover:shadow-accent/5
+                      ${viewMode === 'list' ? 'flex flex-col md:flex-row' : 'flex flex-col'}
+                    `}
+                  >
+                    {/* Image Area */}
+                    <div className={`relative bg-primary-elevated overflow-hidden ${viewMode === 'list' ? 'md:w-72 h-64 md:h-auto' : 'h-60'}`}>
+                      <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-20 grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700">
+                        🚗
+                      </div>
+                      <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                        {annonce.est_bonne_affaire && <Badge color="success">Pépite</Badge>}
+                        {annonce.pays && <Badge color="secondary">{annonce.pays}</Badge>}
+                      </div>
+                      <button 
+                        onClick={(e) => { e.preventDefault(); toggleFavorite(annonce.id); }}
+                        className={`
+                          absolute top-4 right-4 p-2.5 rounded-xl border transition-all z-10
+                          ${annonce.is_favorite 
+                            ? 'bg-accent border-accent text-white shadow-lg shadow-accent/40' 
+                            : 'bg-black/20 backdrop-blur-md border-white/10 text-white hover:bg-accent hover:border-accent'}
+                        `}
+                      >
+                        <Heart size={16} className={annonce.is_favorite ? 'fill-white' : ''} />
+                      </button>
+                      <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end z-10 opacity-0 transform translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                         <div className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold text-white uppercase">
+                            {annonce.ville || 'Région Inconnue'}
+                         </div>
+                         <div className="flex gap-2">
+                            <button className="p-2 bg-white rounded-lg text-black hover:bg-accent hover:text-white transition-colors"><Eye size={14}/></button>
+                         </div>
+                      </div>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="p-6 flex flex-col flex-1">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="text-[10px] font-extrabold text-accent uppercase tracking-[0.2em]">
+                          {annonce.vehicule_marque}
+                        </span>
+                        <div className="flex items-center gap-1 text-primary-text-secondary">
+                           <Star size={10} className="fill-warning text-warning" />
+                           <span className="text-[10px] font-bold">4.8</span>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-bold text-white mb-4 line-clamp-1 group-hover:text-accent transition-colors">
+                        {annonce.vehicule_modele} {annonce.annee}
+                      </h3>
+
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="flex items-center gap-2 text-primary-text-secondary">
+                          <Gauge size={14} />
+                          <span className="text-xs font-medium">{annonce.kilometrage?.toLocaleString()} km</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-primary-text-secondary">
+                          <Zap size={14} />
+                          <span className="text-xs font-medium uppercase">{annonce.carburant}</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-auto">
+                        <div className="flex items-end justify-between">
+                          <div className="flex flex-col">
+                            <span className="text-xs text-primary-text-secondary font-medium">Prix Final</span>
+                            <span className="text-2xl font-black text-white">{annonce.prix?.toLocaleString()}€</span>
+                          </div>
+                          <button className="bg-primary-elevated hover:bg-accent text-white px-5 py-2.5 rounded-2xl text-sm font-bold transition-all border border-primary-border/DEFAULT hover:border-accent group/btn">
+                             Détails 
+                             <ArrowUpDown size={14} className="inline ml-2 group-hover/btn:rotate-180 transition-transform" />
+                          </button>
+                        </div>
+                        
+                        {/* Comparison logic integrated */}
+                        <PriceComparisonBar price={annonce.prix} estimated={annonce.prix_estime} />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full py-20 text-center space-y-6 animate-fade-in">
+                   <div className="w-20 h-20 bg-primary-card rounded-[2.5rem] flex items-center justify-center mx-auto border border-primary-border/DEFAULT">
+                      <Trash2 size={32} className="text-primary-text-secondary" />
+                   </div>
+                   <div className="space-y-2">
+                     <h3 className="text-2xl font-bold text-white">Oops, c'est le désert !</h3>
+                     <p className="text-primary-text-secondary max-w-sm mx-auto">
+                       Aucun véhicule ne correspond à vos critères d'élite. Essayez d'être un peu moins exigeant (juste un peu).
+                     </p>
+                   </div>
+                   <button 
+                    onClick={() => setSearchParams({})}
+                    className="bg-accent text-white px-8 py-4 rounded-2xl font-bold hover:scale-105 transition-transform"
+                   >
+                     Réinitialiser tout
+                   </button>
+                </div>
+              )}
+            </div>
+
+            {/* Pagination */}
+            {totalCount > 0 && (
+              <div className="flex justify-center items-center gap-4 pt-10">
+                <button 
+                  disabled={filters.page === 1}
+                  onClick={() => updateFilter({ page: filters.page - 1 })}
+                  className="p-3 bg-primary-card border border-primary-border/DEFAULT rounded-2xl text-white disabled:opacity-30 disabled:cursor-not-allowed hover:border-accent transition-all"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <div className="flex gap-2">
+                  <span className="px-5 py-3 bg-accent text-white rounded-2xl font-black shadow-lg shadow-accent/20">
+                    {filters.page}
+                  </span>
+                </div>
+                <button 
+                  disabled={filters.page * 10 >= totalCount}
+                  onClick={() => updateFilter({ page: filters.page + 1 })}
+                  className="p-3 bg-primary-card border border-primary-border/DEFAULT rounded-2xl text-white disabled:opacity-30 disabled:cursor-not-allowed hover:border-accent transition-all"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
+
+          </main>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+    </div>
+  );
 }
