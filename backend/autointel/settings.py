@@ -28,6 +28,10 @@ INSTALLED_APPS = [
     'apps.alertes',
     'apps.subscriptions',
     'apps.gamification',
+    'apps.scraping',
+    'apps.ai_assistant',
+    'apps.notifications',
+    'apps.rapports',
 ]
 
 MIDDLEWARE = [
@@ -133,3 +137,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STRIPE_PUBLIC_KEY = config('STRIPE_PUBLIC_KEY', default='pk_test_placeholder')
 STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='sk_test_placeholder')
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='whsec_placeholder')
+
+# PRODUCTION OVERRIDES
+if not DEBUG:
+    # Base de données PostgreSQL
+    DATABASES['default'] = dj_database_url.parse(
+        config('DATABASE_URL'))
+
+    # Sécurité
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # WhiteNoise pour les fichiers statiques
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+    # CORS et hôtes autorisés
+    ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+    CORS_ALLOWED_ORIGINS = config('CORS_ORIGINS', default='').split(',')
