@@ -5,6 +5,8 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticate
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Avg, Count, Min, Max, Q
 from django.shortcuts import get_object_or_404
+import csv
+from django.http import HttpResponse
 from .models import Vehicule, Annonce, Favori, RechercheSauvegardee, Battle
 from .serializers import VehiculeSerializer, AnnonceSerializer, RechercheSauvegardeeSerializer, BattleSerializer
 
@@ -116,6 +118,48 @@ class AnnonceViewSet(viewsets.ModelViewSet):
             .order_by('-count')
         )
         return Response(stats)
+
+    @action(detail=False, methods=['get'])
+    def export_csv(self, request):
+        abonnement = getattr(request.user, 'subscription', None)
+        plan_nom = abonnement.plan.nom if abonnement else None
+        if plan_nom not in ['pro', 'business']:
+            return Response(
+                {'error': 'Export CSV disponible uniquement en plan Pro ou Business'},
+                status=status.HTTP_403_FORBIDDEN)
+
+        annonces = self.filter_queryset(self.get_queryset())[:1000]
+
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="autointel_annonces.csv"'
+        response.write('\ufeff')  # BOM pour compatibilité Excel
+
+        writer = csv.writer(response, delimiter=';')
+        writer.writerow([
+            'Marque', 'Modèle', 'Année', 'Kilométrage',
+            'Carburant', 'Boîte', 'Prix (DA/€)', 'Prix estimé',
+            'Écart %', 'Bonne affaire', 'Ville', 'Pays',
+            'Date publication'
+        ])
+
+        for a in annonces:
+            writer.writerow([
+                a.vehicule.marque,
+                a.vehicule.modele,
+                a.annee,
+                a.kilometrage,
+                a.carburant,
+                a.boite,
+                a.prix,
+                a.prix_estime or 'N/A',
+                f"{a.ecart_prix:.1f}%" if a.ecart_prix else 'N/A',
+                'Oui' if a.est_bonne_affaire else 'Non',
+                a.ville or 'N/A',
+                a.pays,
+                a.date_publication.strftime('%d/%m/%Y') if a.date_publication else 'N/A'
+            ])
+
+        return response
 
 
 class RechercheSauvegardeeViewSet(viewsets.ModelViewSet):

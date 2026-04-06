@@ -6,6 +6,6 @@ from .models import ProfilJoueur
 
 @receiver(post_save, sender=User)
 def create_profil_joueur(sender, instance, created, **kwargs):
-    """Crée automatiquement un profil joueur pour tout nouvel utilisateur"""
+    """Crée ou récupère un profil joueur pour tout nouvel utilisateur"""
     if created:
-        ProfilJoueur.objects.create(user=instance, autocoin_balance=100)
+        ProfilJoueur.objects.get_or_create(user=instance, defaults={'autocoin_balance': 100})

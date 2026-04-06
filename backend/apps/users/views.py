@@ -27,8 +27,8 @@ class RegisterView(viewsets.ViewSet):
                 {
                     'detail': '100 AutoCoins offerts à l\'inscription !',
                     'message': '100 AutoCoins offerts à l\'inscription !',
-                    'access_token': str(refresh.access_token),
-                    'refresh_token': str(refresh),
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh),
                     'user_data': {
                         'id': user.id,
                         'username': user.username,
