@@ -6,7 +6,7 @@ from .models import Abonnement, Plan
 
 @receiver(post_save, sender=User)
 def create_free_subscription(sender, instance, created, **kwargs):
-    """Crée automatiquement un abonnement gratuit pour tout nouvel utilisateur"""
+    """Crée ou récupère un abonnement gratuit pour tout nouvel utilisateur"""
     if created:
         free_plan = Plan.objects.get(nom='free')
-        Abonnement.objects.create(user=instance, plan=free_plan)
+        Abonnement.objects.get_or_create(user=instance, defaults={'plan': free_plan})

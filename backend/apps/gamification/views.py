@@ -3,8 +3,41 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q, Count
-from .models import ProfilJoueur, Transaction, DefiJoueur, Defi
-from .serializers import ProfilJoueurSerializer, TransactionSerializer, DefiJoueurSerializer
+from .models import ProfilJoueur, Transaction, DefiJoueur, Defi, BoutiqueItem, AchatJoueur
+from .serializers import ProfilJoueurSerializer, TransactionSerializer, DefiJoueurSerializer, BoutiqueItemSerializer, AchatJoueurSerializer
+
+
+class BoutiqueViewSet(viewsets.ModelViewSet):
+    queryset = BoutiqueItem.objects.all()
+    serializer_class = BoutiqueItemSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=True, methods=['post'])
+    def buy(self, request, pk=None):
+        item = self.get_object()
+        profil = request.user.profil
+
+        if profil.autocoin_balance < item.prix_ac:
+            return Response({'detail': 'Solde AutoCoins insuffisant'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Effectuer l'achat
+        profil.autocoin_balance -= item.prix_ac
+        profil.save()
+
+        AchatJoueur.objects.create(profil=profil, item=item)
+
+        # Créer la transaction de débit
+        Transaction.objects.create(
+            profil=profil,
+            montant=-item.prix_ac,
+            type='depense_boutique',
+            description=f"Achat: {item.nom}"
+        )
+
+        return Response({
+            'detail': f'Achat de {item.nom} réussi !',
+            'balance': profil.autocoin_balance
+        }, status=status.HTTP_200_OK)
 
 
 class ProfilJoueurViewSet(viewsets.ViewSet):

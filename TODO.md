@@ -1,0 +1,1 @@
+# AUTO-i Launch COMPLETE ✅&#10;&#10;## Backend&#10;- [x] Virtualenv & deps installed&#10;- [x] fix_django_errors.bat (migrations/runserver soon)&#10;&#10;## Frontend&#10;- [x] npm run dev - http://localhost:5173/&#10;&#10;Access:&#10;- Frontend: http://localhost:5173/&#10;- Backend API: http://localhost:8000/api/&#10;- Admin: http://localhost:8000/admin/&#10;&#10;Projet lancé! 🎉

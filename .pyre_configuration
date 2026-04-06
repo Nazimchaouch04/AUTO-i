@@ -1,0 +1,17 @@
+{
+  "source_directories": [
+    "backend",
+    "backend/apps"
+  ],
+  "search_path": [
+    "backend/venv/Lib/site-packages",
+    "backend/venv/Lib/site-packages/django_stubs_ext",
+    "backend/venv/Lib/site-packages/rest_framework_stubs"
+  ],
+  "site_package_search_strategy": "all",
+  "exclude": [
+    ".*/venv/.*",
+    ".*/migrations/.*"
+  ],
+  "typeshed": "backend/venv/Lib/site-packages/django-stubs"
+}

@@ -57,7 +57,7 @@ class Transaction(models.Model):
         ('gain_estimation', 'Estimation effectuée'),
         ('gain_bonne_affaire', 'Bonne affaire détectée'),
         ('gain_defi', 'Défi complété'),
-        ('depense_shop', 'Achat boutique'),
+        ('depense_boutique', 'Achat en boutique'),
         ('gain_battle', 'Battle gagnée'),
     ]
     profil = models.ForeignKey(ProfilJoueur, on_delete=models.CASCADE, related_name='transactions')
@@ -104,3 +104,27 @@ class DefiJoueur(models.Model):
 
     def __str__(self):
         return f"{self.profil.user.username} - {self.defi.titre}"
+
+
+class BoutiqueItem(models.Model):
+    nom = models.CharField(max_length=100)
+    description = models.TextField()
+    prix_ac = models.IntegerField()
+    image_url = models.URLField(null=True, blank=True)
+    slug = models.SlugField(unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.nom
+
+
+class AchatJoueur(models.Model):
+    profil = models.ForeignKey(ProfilJoueur, on_delete=models.CASCADE, related_name='achats')
+    item = models.ForeignKey(BoutiqueItem, on_delete=models.CASCADE)
+    date_achat = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date_achat']
+
+    def __str__(self):
+        return f"{self.profil.user.username} a acheté {self.item.nom}"

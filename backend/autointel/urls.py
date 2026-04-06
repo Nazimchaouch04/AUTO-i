@@ -21,6 +21,9 @@ def api_root(request):
             'alertes': '/api/alertes/',
             'subscriptions': '/api/subscriptions/',
             'gamification': '/api/gamification/',
+            'ai_assistant': '/api/ai/',
+            'notifications': '/api/notifications/',
+            'rapports': '/api/rapports/',
         }
     })
 
@@ -45,4 +48,7 @@ urlpatterns = [
     path('api/alertes/', include('apps.alertes.urls')),
     path('api/subscriptions/', include('apps.subscriptions.urls')),
     path('api/gamification/', include('apps.gamification.urls')),
+    path('api/ai/', include('apps.ai_assistant.urls')),
+    path('api/notifications/', include('apps.notifications.urls')),
+    path('api/rapports/', include('apps.rapports.urls')),
 ]

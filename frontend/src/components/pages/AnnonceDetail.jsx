@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Heart, Share2, Phone, Mail, MapPin, Calendar, Fuel, Settings, Shield, Star, ChevronLeft, ChevronRight, Maximize2, Download, Camera, Video, FileText, AlertCircle, Check, X, Send, MessageSquare, ExternalLink, TrendingUp, Award, Clock, Users, Zap } from 'lucide-react'
+import { ArrowLeft, Heart, Share2, Phone, Mail, MapPin, Calendar, Fuel, Settings, Shield, Star, ChevronLeft, ChevronRight, Maximize2, Download, Camera, Video, FileText, AlertCircle, Check, X, Send, MessageSquare, ExternalLink, TrendingUp, Award, Clock, Users, Zap, Swords } from 'lucide-react'
 
 export default function AnnonceDetail() {
   const { id } = useParams()
@@ -18,6 +18,8 @@ export default function AnnonceDetail() {
   const [showMessageForm, setShowMessageForm] = useState(false)
   const [similarAnnonces, setSimilarAnnonces] = useState([])
   const [viewHistory, setViewHistory] = useState([])
+  const [showCompareModal, setShowCompareModal] = useState(false)
+  const [recentVehicles, setRecentVehicles] = useState([])
 
   useEffect(() => {
     fetchAnnonceDetail()
@@ -103,9 +105,10 @@ export default function AnnonceDetail() {
       }
       
       setAnnonce(transformedAnnonce)
+      setIsFavorite(data.is_favorite)
       
       // Charger les annonces similaires
-      fetchSimilarAnnonces(transformedAnnonce)
+      fetchSimilarAnnonces()
       
       // Enregistrer la vue
       recordView(transformedAnnonce.id)
@@ -188,26 +191,12 @@ export default function AnnonceDetail() {
     }
   }
 
-  const fetchSimilarAnnonces = async (currentAnnonce) => {
+  const fetchSimilarAnnonces = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/annonces/')
+      const response = await fetch(`http://127.0.0.1:8000/api/annonces/${id}/similaires/`)
       if (response.ok) {
         const data = await response.json()
-        const similar = data
-          .filter(a => a.id !== currentAnnonce.id && 
-                   (a.marque_nom === currentAnnonce.marque_nom || 
-                    a.categorie === currentAnnonce.categorie))
-          .slice(0, 3)
-          .map(a => ({
-            id: a.id,
-            titre: a.titre,
-            prix: a.prix,
-            kilometrage: a.kilometrage,
-            annee: a.annee,
-            images: a.images || ['/images/placeholder.jpg'],
-            ville: a.ville || 'Paris'
-          }))
-        setSimilarAnnonces(similar)
+        setSimilarAnnonces(data)
       }
     } catch (error) {
       console.error('Error fetching similar annonces:', error)
@@ -239,17 +228,21 @@ export default function AnnonceDetail() {
     setShowImageModal(true)
   }
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite)
-    // Sauvegarder dans localStorage
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]')
-    if (!isFavorite) {
-      favorites.push(annonce.id)
-    } else {
-      const index = favorites.indexOf(annonce.id)
-      if (index > -1) favorites.splice(index, 1)
+  const toggleFavorite = async () => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/annonces/${id}/toggle_favori/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setIsFavorite(data.status === 'added')
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
     }
-    localStorage.setItem('favorites', JSON.stringify(favorites))
   }
 
   const shareAnnonce = (platform) => {
@@ -366,6 +359,16 @@ export default function AnnonceDetail() {
               className="p-2 border border-primary-border/DEFAULT rounded-lg hover:bg-primary-elevated transition-colors duration-200"
             >
               <Share2 className="w-5 h-5 text-primary-text-secondary" />
+            </button>
+            <button 
+              onClick={() => setShowCompareModal(true)}
+              className="p-2 border border-primary-border/DEFAULT rounded-lg hover:bg-accent hover:border-accent hover:text-white transition-all duration-200 group relative"
+              title="Comparer avec un autre véhicule"
+            >
+              <Swords className="w-5 h-5" />
+              <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-accent text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Comparer (+10 AC)
+              </span>
             </button>
           </div>
         </div>
@@ -759,42 +762,46 @@ export default function AnnonceDetail() {
         
         {/* Modal de partage */}
         {showShareModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-primary-card border border-primary-border/DEFAULT rounded-xl p-6 max-w-md w-full">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-primary-text-primary">Partager cette annonce</h3>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div className="bg-primary-card border border-primary-border/DEFAULT rounded-[2rem] p-8 max-w-md w-full shadow-2xl">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-white tracking-tight">Partager cette annonce</h3>
                 <button
                   onClick={() => setShowShareModal(false)}
-                  className="p-1 hover:bg-primary-elevated rounded-lg transition-colors duration-200"
+                  className="p-2 hover:bg-primary-elevated rounded-xl transition-colors"
                 >
                   <X className="w-5 h-5 text-primary-text-secondary" />
                 </button>
               </div>
               
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => shareAnnonce('facebook')}
-                  className="w-full flex items-center justify-center space-x-2 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
+                  className="flex flex-col items-center gap-2 p-4 bg-blue-600/10 hover:bg-blue-600/20 border border-blue-600/20 rounded-2xl text-blue-500 transition-all font-bold"
                 >
-                  <span>Facebook</span>
+                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white"><Users size={20} /></div>
+                  Facebook
                 </button>
                 <button
                   onClick={() => shareAnnonce('twitter')}
-                  className="w-full flex items-center justify-center space-x-2 p-3 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors duration-200"
+                  className="flex flex-col items-center gap-2 p-4 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 rounded-2xl text-sky-500 transition-all font-bold"
                 >
-                  <span>Twitter</span>
+                  <div className="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center text-white"><Share2 size={20} /></div>
+                  Twitter
                 </button>
                 <button
                   onClick={() => shareAnnonce('whatsapp')}
-                  className="w-full flex items-center justify-center space-x-2 p-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200"
+                  className="flex flex-col items-center gap-2 p-4 bg-green-600/10 hover:bg-green-600/20 border border-green-600/20 rounded-2xl text-green-500 transition-all font-bold"
                 >
-                  <span>WhatsApp</span>
+                  <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white"><MessageSquare size={20} /></div>
+                  WhatsApp
                 </button>
                 <button
                   onClick={() => shareAnnonce('copy')}
-                  className="w-full flex items-center justify-center space-x-2 p-3 bg-primary-elevated hover:bg-primary-card border border-primary-border/DEFAULT text-primary-text-primary rounded-lg transition-colors duration-200"
+                  className="flex flex-col items-center gap-2 p-4 bg-primary-elevated hover:bg-primary-card border border-primary-border/DEFAULT rounded-2xl text-primary-text-primary transition-all font-bold"
                 >
-                  <span>Copier le lien</span>
+                  <div className="w-10 h-10 bg-primary-border/50 rounded-full flex items-center justify-center text-white"><FileText size={20} /></div>
+                  Copier
                 </button>
               </div>
             </div>
@@ -803,121 +810,173 @@ export default function AnnonceDetail() {
         
         {/* Modal d'image plein écran */}
         {showImageModal && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-            <div className="relative max-w-4xl max-h-full">
-              <button
-                onClick={() => setShowImageModal(false)}
-                className="absolute -top-12 right-0 p-2 text-white hover:text-gray-300 transition-colors duration-200"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              
-              <div className="relative">
-                <div className="flex items-center justify-center text-8xl text-white">
-                  🚗
-                </div>
+          <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4">
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"
+            >
+              <X size={24} />
+            </button>
+
+            <div className="relative max-w-5xl w-full h-full flex flex-col items-center justify-center">
+              <div className="relative group w-full flex items-center justify-center">
+                 <img 
+                  src={annonce.images[selectedImageIndex]} 
+                  alt={annonce.titre}
+                  className="max-w-full max-h-[80vh] rounded-3xl shadow-2xl object-contain"
+                />
                 
-                {/* Navigation */}
                 {annonce.images.length > 1 && (
                   <>
                     <button
                       onClick={() => setSelectedImageIndex((prev) => (prev - 1 + annonce.images.length) % annonce.images.length)}
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors duration-200"
+                      className="absolute left-4 p-4 bg-black/50 text-white rounded-full hover:bg-accent transition-all"
                     >
-                      <ChevronLeft className="w-6 h-6" />
+                      <ChevronLeft size={32} />
                     </button>
                     <button
                       onClick={() => setSelectedImageIndex((prev) => (prev + 1) % annonce.images.length)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors duration-200"
+                      className="absolute right-4 p-4 bg-black/50 text-white rounded-full hover:bg-accent transition-all"
                     >
-                      <ChevronRight className="w-6 h-6" />
+                      <ChevronRight size={32} />
                     </button>
                   </>
                 )}
-                
-                {/* Counter */}
-                {annonce.images.length > 1 && (
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-                    {selectedImageIndex + 1} / {annonce.images.length}
-                  </div>
-                )}
               </div>
               
-              {/* Thumbnails */}
-              {annonce.images.length > 1 && (
-                <div className="flex space-x-2 mt-4 overflow-x-auto">
-                  {annonce.images.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImageIndex(index)}
-                      className={`flex-shrink-0 w-16 h-16 bg-gray-700 rounded-lg border-2 ${
-                        selectedImageIndex === index ? 'border-white' : 'border-transparent'
-                      }`}
-                    >
-                      <div className="w-full h-full flex items-center justify-center text-2xl">
-                        🚗
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="mt-8 flex gap-2 overflow-x-auto pb-4 max-w-4xl px-4">
+                {annonce.images.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`flex-shrink-0 w-20 h-20 bg-primary-card rounded-xl border-2 overflow-hidden transition-all ${
+                      selectedImageIndex === index ? 'border-accent scale-110' : 'border-transparent opacity-50 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
         
         {/* Modal de messagerie */}
         {showMessageForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-primary-card border border-primary-border/DEFAULT rounded-xl p-6 max-w-md w-full">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-primary-text-primary">Contacter le vendeur</h3>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div className="bg-primary-card border border-primary-border/DEFAULT rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-black text-white tracking-tight">Contacter l'annonceur</h3>
                 <button
                   onClick={() => setShowMessageForm(false)}
-                  className="p-1 hover:bg-primary-elevated rounded-lg transition-colors duration-200"
+                  className="p-2 hover:bg-primary-elevated rounded-xl transition-colors"
                 >
-                  <X className="w-5 h-5 text-primary-text-secondary" />
+                  <X className="w-6 h-6 text-primary-text-secondary" />
                 </button>
               </div>
               
-              <form onSubmit={sendMessage} className="space-y-4">
+              <form onSubmit={sendMessage} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-primary-text-secondary mb-2">Votre message</label>
+                  <label className="block text-xs font-bold text-primary-text-secondary uppercase tracking-[0.2em] mb-3">Votre message</label>
                   <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Bonjour, je suis intéressé par cette annonce..."
-                    rows={4}
-                    className="w-full px-4 py-2 bg-primary-elevated border border-primary-border/DEFAULT rounded-lg text-primary-text-primary placeholder-primary-text-secondary focus:outline-none focus:border-accent resize-none"
+                    placeholder="Bonjour, je suis intéressé par votre annonce. Le prix est-il négociable ?"
+                    rows={5}
+                    className="w-full px-6 py-4 bg-primary-elevated border border-primary-border/DEFAULT rounded-2xl text-white placeholder-primary-text-secondary focus:outline-none focus:border-accent resize-none transition-all"
                     required
                   />
                 </div>
                 
-                <div className="bg-primary-elevated p-3 rounded-lg">
-                  <p className="text-sm text-primary-text-secondary">
-                    <span className="font-medium">Annonce:</span> {annonce.titre}
-                  </p>
-                  <p className="text-sm text-primary-text-secondary">
-                    <span className="font-medium">Prix:</span> {annonce.prix.toLocaleString()}€
-                  </p>
-                </div>
-                
-                <div className="flex space-x-3">
-                  <button
-                    type="submit"
-                    className="flex-1 bg-accent hover:bg-accent-secondary text-white py-2 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>Envoyer</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowMessageForm(false)}
-                    className="flex-1 bg-primary-elevated hover:bg-primary-card border border-primary-border/DEFAULT text-primary-text-primary py-2 rounded-lg font-medium transition-colors duration-200"
-                  >
-                    Annuler
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  className="w-full py-5 bg-accent hover:bg-accent-secondary text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-accent/20 flex items-center justify-center gap-3"
+                >
+                  <Send className="w-5 h-5" />
+                  Envoyer le message
+                </button>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Comparaison */}
+        {showCompareModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-fade-in">
+            <div className="bg-primary-card border border-primary-border/DEFAULT rounded-[3rem] p-10 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(0,180,216,0.15)] relative">
+              <div className="absolute top-0 right-0 p-10 opacity-5">
+                 <Swords size={200} />
+              </div>
+              
+              <div className="flex items-center justify-between mb-10 relative z-10">
+                <div>
+                   <h3 className="text-3xl font-black text-white tracking-tight uppercase">Arena Duel</h3>
+                   <p className="text-sm text-primary-text-secondary mt-1">Choisissez un adversaire pour une analyse IA.</p>
+                </div>
+                <button
+                  onClick={() => setShowCompareModal(false)}
+                  className="p-3 bg-primary-elevated hover:bg-primary-card rounded-2xl transition-all border border-primary-border/DEFAULT"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-4 space-y-6 relative z-10 custom-scrollbar">
+                <div className="p-6 bg-accent/10 border border-accent/20 rounded-[2rem] flex items-center gap-4">
+                   <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center text-white"><Zap size={24} /></div>
+                   <div>
+                      <p className="text-[10px] font-black text-accent uppercase tracking-widest">Véhicule Actuel</p>
+                      <p className="text-xl font-bold text-white">{annonce.titre}</p>
+                   </div>
+                </div>
+
+                <div className="flex items-center gap-4 mb-4">
+                   <div className="h-[1px] flex-1 bg-white/10" />
+                   <span className="text-[10px] font-black text-primary-text-secondary uppercase tracking-[0.3em]">Candidats suggérés</span>
+                   <div className="h-[1px] flex-1 bg-white/10" />
+                </div>
+
+                {similarAnnonces.length > 0 ? (
+                  similarAnnonces.map((similar) => (
+                    <button
+                      key={similar.id}
+                      onClick={async () => {
+                        try {
+                           fetch('http://127.0.0.1:8000/api/gamification/profil/add-coins/', {
+                             method: 'POST',
+                             headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}`, 'Content-Type': 'application/json' },
+                             body: JSON.stringify({ amount: 10, motif: 'Comparaison de véhicules' })
+                           });
+                        } catch(e) {}
+                        
+                        navigate(`/compare?v1=${annonce.id}&v2=${similar.id}`);
+                        setShowCompareModal(false);
+                      }}
+                      className="w-full flex items-center gap-6 p-6 bg-primary-elevated hover:bg-primary-card border border-primary-border/DEFAULT hover:border-accent rounded-[2rem] transition-all group relative overflow-hidden"
+                    >
+                      <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-accent/5 rounded-full blur-2xl group-hover:bg-accent/10 transition-all" />
+                      <div className="w-20 h-20 bg-black/30 rounded-2xl flex items-center justify-center text-4xl group-hover:scale-110 transition-all shadow-xl">
+                        🚗
+                      </div>
+                      <div className="text-left flex-1 relative z-10">
+                        <p className="font-black text-white text-lg tracking-tight group-hover:text-accent transition-colors">{similar.titre}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                           <span className="text-accent font-bold">{similar.prix.toLocaleString()}€</span>
+                           <span className="text-primary-text-secondary">•</span>
+                           <span className="text-xs text-primary-text-secondary">{similar.kilometrage.toLocaleString()} km</span>
+                        </div>
+                      </div>
+                      <div className="w-12 h-12 bg-white/5 group-hover:bg-accent rounded-xl flex items-center justify-center text-primary-text-secondary group-hover:text-white transition-all transform group-hover:rotate-12">
+                         <Swords size={20} />
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-16 opacity-50 italic">
+                    Aucun adversaire digne n'a été trouvé.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
