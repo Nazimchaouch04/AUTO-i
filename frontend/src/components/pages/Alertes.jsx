@@ -2,10 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { 
   Bell, Plus, Trash2, Edit3, Mail, Smartphone, 
   Search, Filter, Calendar, BellOff, CheckCircle2, 
-  AlertCircle, ChevronRight, X, Zap, Target
+  AlertCircle, ChevronRight, X, Zap, Target, Send, 
+  MessageSquare, Settings, Info, Check, AlertTriangle
 } from 'lucide-react';
+import PageTransition from '../ui/PageTransition';
+import EmptyState from '../ui/EmptyState';
+import { useToast } from '../ui/Toast';
 
 const API_BASE = 'http://127.0.0.1:8000/api/alertes/';
+const NOTIFICATIONS_API = 'http://127.0.0.1:8000/api/notifications/';
 
 export default function Alertes() {
   const [alertes, setAlertes] = useState([]);
@@ -13,7 +18,13 @@ export default function Alertes() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  const [activeTab, setActiveTab] = useState('alertes'); // 'alertes' ou 'notifications'
+  const { showToast } = useToast();
+
+  // États pour les notifications
+  const [canaux, setCanaux] = useState([]);
+  const [notificationStatus, setNotificationStatus] = useState({});
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   const [formData, setFormData] = useState({
     titre: '',
@@ -35,7 +46,10 @@ export default function Alertes() {
 
   useEffect(() => {
     fetchAlertes();
-  }, []);
+    if (activeTab === 'notifications') {
+      fetchNotifications();
+    }
+  }, [activeTab]);
 
   const fetchAlertes = async () => {
     setLoading(true);
@@ -49,6 +63,30 @@ export default function Alertes() {
       setError("Impossible de charger vos alertes.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    setLoadingNotifications(true);
+    try {
+      const [canauxResponse, statusResponse] = await Promise.all([
+        fetch(`${NOTIFICATIONS_API}canaux/`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${NOTIFICATIONS_API}status/`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+      
+      const canauxData = await canauxResponse.json();
+      const statusData = await statusResponse.json();
+      
+      setCanaux(canauxData || []);
+      setNotificationStatus(statusData || {});
+    } catch (err) {
+      console.error("Erreur chargement notifications:", err);
+    } finally {
+      setLoadingNotifications(false);
     }
   };
 
@@ -74,8 +112,7 @@ export default function Alertes() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setAlertes(prev => prev.filter(a => a.id !== id));
-      setSuccess("Alerte supprimée.");
-      setTimeout(() => setSuccess(null), 3000);
+      showToast({ message: "Alerte supprimée.", type: 'success' });
     } catch (err) { setError("Erreur lors de la suppression."); }
   };
 
@@ -105,12 +142,11 @@ export default function Alertes() {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess(editingId ? "Alerte mise à jour !" : "Alerte créée avec succès !");
+        showToast({ message: editingId ? "Alerte mise à jour !" : "Alerte créée avec succès", type: 'success' });
         setShowForm(false);
         setEditingId(null);
         resetForm();
         fetchAlertes();
-        setTimeout(() => setSuccess(null), 3000);
       } else {
         setError(data.detail || "Une erreur est survenue.");
       }
@@ -148,7 +184,89 @@ export default function Alertes() {
     setShowForm(true);
   };
 
+  // Fonctions pour les notifications
+  const handleAddCanal = async (canalType, valeur) => {
+    try {
+      const response = await fetch(`${NOTIFICATIONS_API}canaux/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ canal: canalType, valeur })
+      });
+      
+      if (response.ok) {
+        showToast({ message: "Canal ajouté avec succès", type: 'success' });
+        fetchNotifications();
+      } else {
+        const data = await response.json();
+        showToast({ message: data.error || "Erreur lors de l'ajout", type: 'error' });
+      }
+    } catch (err) {
+      showToast({ message: "Erreur de connexion", type: 'error' });
+    }
+  };
+
+  const handleVerifyCanal = async (canalId) => {
+    try {
+      const response = await fetch(`${NOTIFICATIONS_API}canaux/${canalId}/verifier/`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        showToast({ 
+          message: data.success ? "Canal vérifié avec succès" : "Échec de la vérification", 
+          type: data.success ? 'success' : 'error' 
+        });
+        fetchNotifications();
+      } else {
+        showToast({ message: data.error || "Erreur de vérification", type: 'error' });
+      }
+    } catch (err) {
+      showToast({ message: "Erreur de connexion", type: 'error' });
+    }
+  };
+
+  const handleDeleteCanal = async (canalId) => {
+    if (!window.confirm("Supprimer ce canal de notification ?")) return;
+    
+    try {
+      await fetch(`${NOTIFICATIONS_API}canaux/${canalId}/supprimer/`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      showToast({ message: "Canal supprimé", type: 'success' });
+      fetchNotifications();
+    } catch (err) {
+      showToast({ message: "Erreur de suppression", type: 'error' });
+    }
+  };
+
+  const handleToggleCanal = async (canalId) => {
+    try {
+      const canal = canaux.find(c => c.id === canalId);
+      const response = await fetch(`${NOTIFICATIONS_API}canaux/${canalId}/activer/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ is_active: !canal.is_active })
+      });
+      
+      if (response.ok) {
+        fetchNotifications();
+      }
+    } catch (err) {
+      showToast({ message: "Erreur lors de la modification", type: 'error' });
+    }
+  };
+
   return (
+    <PageTransition>
     <div className="min-h-screen bg-[#0D0D14] pt-28 pb-20 px-4 md:px-8">
       <div className="max-w-6xl mx-auto">
         
@@ -170,7 +288,32 @@ export default function Alertes() {
           </button>
         </div>
 
-        {/* Notifications (Success/Error) */}
+        {/* Onglets */}
+        <div className="flex gap-2 mb-8 bg-primary-elevated rounded-2xl p-1 max-w-md">
+          <button
+            onClick={() => setActiveTab('alertes')}
+            className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all ${
+              activeTab === 'alertes' 
+                ? 'bg-accent text-white' 
+                : 'text-primary-text-secondary hover:text-white'
+            }`}
+          >
+            <Target size={18} className="inline mr-2" />
+            Alertes
+          </button>
+          <button
+            onClick={() => setActiveTab('notifications')}
+            className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all ${
+              activeTab === 'notifications' 
+                ? 'bg-accent text-white' 
+                : 'text-primary-text-secondary hover:text-white'
+            }`}
+          >
+            <Settings size={18} className="inline mr-2" />
+            Notifications
+          </button>
+        </div>
+
         {error && (
           <div className="mb-8 p-4 bg-danger/10 border border-danger/20 rounded-2xl flex items-center gap-3 text-danger animate-bounce-subtle">
              <AlertCircle size={20} />
@@ -178,16 +321,12 @@ export default function Alertes() {
              <button onClick={() => setError(null)} className="ml-auto"><X size={18} /></button>
           </div>
         )}
-        {success && (
-          <div className="mb-8 p-4 bg-success/10 border border-success/20 rounded-2xl flex items-center gap-3 text-success animate-fade-in">
-             <CheckCircle2 size={20} />
-             <p className="font-bold text-sm">{success}</p>
-          </div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
-          {/* Main List */}
+          {activeTab === 'alertes' ? (
+          <>
+          {/* Main List - Alertes */}
           <div className="lg:col-span-8 space-y-6">
             {loading ? (
               [1, 2, 3].map(n => <div key={n} className="h-40 bg-primary-card rounded-3xl animate-pulse border border-primary-border/DEFAULT" />)
@@ -251,17 +390,19 @@ export default function Alertes() {
                 </div>
               ))
             ) : (
-              <div className="bg-primary-card border border-dashed border-primary-border/DEFAULT rounded-[2.5rem] py-24 text-center">
-                 <div className="w-20 h-20 bg-primary-elevated rounded-full flex items-center justify-center mx-auto mb-6 text-primary-text-secondary opacity-30">
-                    <BellOff size={40} />
-                 </div>
-                 <h3 className="text-xl font-bold text-white mb-2">Aucune alerte active</h3>
-                 <p className="text-primary-text-secondary max-w-xs mx-auto">Créez votre première alerte pour ne rater aucune bonne affaire.</p>
+              <div className="col-span-full">
+                <EmptyState 
+                  icon="🔔" 
+                  title="Aucune alerte créée" 
+                  subtitle="Configure une alerte pour ne rater aucune bonne affaire" 
+                  actionLabel="Créer une alerte" 
+                  onAction={() => { resetForm(); setShowForm(true); }}
+                />
               </div>
             )}
           </div>
 
-          {/* Side Info / Global Stats */}
+          {/* Side Info - Alertes */}
           <div className="lg:col-span-4 space-y-8">
              <div className="bg-primary-card border border-primary-border/DEFAULT rounded-3xl p-8 sticky top-28">
                 <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2">
@@ -287,6 +428,259 @@ export default function Alertes() {
                 </div>
              </div>
           </div>
+          </>
+        ) : (
+          <>
+          {/* Section Notifications */}
+          <div className="lg:col-span-8 space-y-6">
+            {loadingNotifications ? (
+              [1, 2].map(n => <div key={n} className="h-32 bg-primary-card rounded-3xl animate-pulse border border-primary-border/DEFAULT" />)
+            ) : (
+              <>
+                {/* Carte Telegram */}
+                <div className="bg-primary-card border border-primary-border/DEFAULT rounded-3xl p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center">
+                        <MessageSquare className="text-blue-400" size={24} />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">Telegram</h3>
+                        <p className="text-sm text-primary-text-secondary">
+                          {notificationStatus.telegram?.configured ? 'Configuré' : 'Non configuré'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      notificationStatus.telegram?.configured 
+                        ? 'bg-success/10 text-success' 
+                        : 'bg-warning/10 text-warning'
+                    }`}>
+                      {notificationStatus.telegram?.configured ? 'ACTIF' : 'INACTIF'}
+                    </div>
+                  </div>
+
+                  {canaux.filter(c => c.canal === 'telegram').map(canal => (
+                    <div key={canal.id} className="mb-4 p-4 bg-primary-elevated rounded-2xl">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-white font-medium">Chat ID: {canal.display_valeur}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {canal.is_verified ? (
+                              <span className="flex items-center gap-1 text-xs text-success">
+                                <Check size={12} /> Vérifié
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-xs text-warning">
+                                <AlertTriangle size={12} /> Non vérifié
+                              </span>
+                            )}
+                            <span className={`text-xs ${canal.is_active ? 'text-success' : 'text-primary-text-secondary'}`}>
+                              {canal.is_active ? 'Actif' : 'Inactif'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {!canal.is_verified && (
+                            <button
+                              onClick={() => handleVerifyCanal(canal.id)}
+                              className="p-2 bg-accent/10 text-accent rounded-xl hover:bg-accent/20"
+                              title="Vérifier"
+                            >
+                              <Send size={16} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleToggleCanal(canal.id)}
+                            className={`p-2 rounded-xl ${canal.is_active ? 'bg-success/10 text-success' : 'bg-gray-700 text-gray-400'}`}
+                            title={canal.is_active ? "Désactiver" : "Activer"}
+                          >
+                            <Zap size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCanal(canal.id)}
+                            className="p-2 bg-danger/10 text-danger rounded-xl hover:bg-danger/20"
+                            title="Supprimer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="mt-6 p-4 bg-blue-500/5 border border-blue-500/20 rounded-2xl">
+                    <p className="text-xs text-primary-text-secondary font-medium mb-3">
+                      <strong>Instructions :</strong>
+                    </p>
+                    <ol className="text-xs text-primary-text-secondary space-y-1 list-decimal list-inside">
+                      <li>Cherchez <strong>@AutoIntelBot</strong> sur Telegram</li>
+                      <li>Envoyez <strong>/start</strong></li>
+                      <li>Copiez votre <strong>Chat ID</strong></li>
+                      <li>Ajoutez-le ici et vérifiez</li>
+                    </ol>
+                  </div>
+
+                  {canaux.filter(c => c.canal === 'telegram').length === 0 && (
+                    <div className="mt-4">
+                      <input
+                        type="text"
+                        placeholder="Votre Chat ID Telegram (ex: 123456789)"
+                        className="w-full bg-primary-elevated border border-primary-border/DEFAULT rounded-2xl p-4 text-white outline-none focus:border-accent transition-all font-bold mb-3"
+                        id="telegram-chat-id"
+                      />
+                      <button
+                        onClick={() => {
+                          const input = document.getElementById('telegram-chat-id');
+                          if (input.value.trim()) {
+                            handleAddCanal('telegram', input.value.trim());
+                            input.value = '';
+                          }
+                        }}
+                        className="w-full bg-blue-500 text-white py-3 rounded-2xl font-bold hover:bg-blue-600 transition-all"
+                      >
+                        Connecter Telegram
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Carte WhatsApp */}
+                <div className="bg-primary-card border border-primary-border/DEFAULT rounded-3xl p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center">
+                        <Smartphone className="text-green-400" size={24} />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">WhatsApp</h3>
+                        <p className="text-sm text-primary-text-secondary">
+                          {notificationStatus.whatsapp?.configured ? 'Configuré' : 'Non configuré'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      notificationStatus.whatsapp?.configured 
+                        ? 'bg-success/10 text-success' 
+                        : 'bg-warning/10 text-warning'
+                    }`}>
+                      {notificationStatus.whatsapp?.configured ? 'ACTIF' : 'INACTIF'}
+                    </div>
+                  </div>
+
+                  {canaux.filter(c => c.canal === 'whatsapp').map(canal => (
+                    <div key={canal.id} className="mb-4 p-4 bg-primary-elevated rounded-2xl">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-white font-medium">Numéro: {canal.display_valeur}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {canal.is_verified ? (
+                              <span className="flex items-center gap-1 text-xs text-success">
+                                <Check size={12} /> Vérifié
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-xs text-warning">
+                                <AlertTriangle size={12} /> Non vérifié
+                              </span>
+                            )}
+                            <span className={`text-xs ${canal.is_active ? 'text-success' : 'text-primary-text-secondary'}`}>
+                              {canal.is_active ? 'Actif' : 'Inactif'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {!canal.is_verified && (
+                            <button
+                              onClick={() => handleVerifyCanal(canal.id)}
+                              className="p-2 bg-accent/10 text-accent rounded-xl hover:bg-accent/20"
+                              title="Envoyer un message test"
+                            >
+                              <Send size={16} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleToggleCanal(canal.id)}
+                            className={`p-2 rounded-xl ${canal.is_active ? 'bg-success/10 text-success' : 'bg-gray-700 text-gray-400'}`}
+                            title={canal.is_active ? "Désactiver" : "Activer"}
+                          >
+                            <Zap size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCanal(canal.id)}
+                            className="p-2 bg-danger/10 text-danger rounded-xl hover:bg-danger/20"
+                            title="Supprimer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="mt-6 p-4 bg-green-500/5 border border-green-500/20 rounded-2xl">
+                    <p className="text-xs text-primary-text-secondary font-medium mb-2">
+                      <strong>Note :</strong> Nécessite un compte Twilio (gratuit pour les tests)
+                    </p>
+                  </div>
+
+                  {canaux.filter(c => c.canal === 'whatsapp').length === 0 && (
+                    <div className="mt-4">
+                      <input
+                        type="text"
+                        placeholder="Votre numéro WhatsApp (ex: +213123456789)"
+                        className="w-full bg-primary-elevated border border-primary-border/DEFAULT rounded-2xl p-4 text-white outline-none focus:border-accent transition-all font-bold mb-3"
+                        id="whatsapp-number"
+                      />
+                      <button
+                        onClick={() => {
+                          const input = document.getElementById('whatsapp-number');
+                          if (input.value.trim()) {
+                            handleAddCanal('whatsapp', input.value.trim());
+                            input.value = '';
+                          }
+                        }}
+                        className="w-full bg-green-500 text-white py-3 rounded-2xl font-bold hover:bg-green-600 transition-all"
+                      >
+                        Connecter WhatsApp
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Side Info - Notifications */}
+          <div className="lg:col-span-4 space-y-8">
+             <div className="bg-primary-card border border-primary-border/DEFAULT rounded-3xl p-8 sticky top-28">
+                <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2">
+                   <Info className="text-accent" size={20} />
+                   Guide Notifications
+                </h3>
+                <div className="space-y-4">
+                   <div className="p-4 bg-primary-elevated rounded-2xl">
+                      <h4 className="text-sm font-bold text-white mb-2">🚀 Temps Réel</h4>
+                      <p className="text-xs text-primary-text-secondary">
+                        Recevez les alertes instantanément sur Telegram et WhatsApp dès qu'une nouvelle annonce correspond à vos critères.
+                      </p>
+                   </div>
+                   <div className="p-4 bg-primary-elevated rounded-2xl">
+                      <h4 className="text-sm font-bold text-white mb-2">🔧 Configuration Simple</h4>
+                      <p className="text-xs text-primary-text-secondary">
+                        Connectez vos canaux en quelques clics. Le bot vous guidera pas à pas.
+                      </p>
+                   </div>
+                   <div className="p-4 bg-accent/5 border border-accent/20 rounded-2xl">
+                      <h4 className="text-sm font-bold text-accent mb-2">💡 Pro Tip</h4>
+                      <p className="text-xs text-primary-text-secondary">
+                        Activez plusieurs canaux pour ne jamais rater une bonne affaire !
+                      </p>
+                   </div>
+                </div>
+             </div>
+          </div>
+          </>
+        )}
         </div>
       </div>
 
@@ -444,5 +838,6 @@ export default function Alertes() {
       `}</style>
 
     </div>
+    </PageTransition>
   );
 }

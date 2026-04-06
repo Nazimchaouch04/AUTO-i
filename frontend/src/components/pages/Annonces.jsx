@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { 
+import {
   Search, Filter, Heart, Eye, MapPin, Calendar, Fuel, 
   Grid, List, SlidersHorizontal, X, Check, Star, 
   TrendingUp, Car, ChevronLeft, ChevronRight,
   Gauge, Zap, Info, ArrowUpDown, Trash2
 } from 'lucide-react';
 import { debounce } from 'lodash';
+import PageTransition from '../ui/PageTransition';
+import EmptyState from '../ui/EmptyState';
+import { SkeletonCard } from '../ui/Skeleton';
+import { useToast } from '../ui/Toast';
+import ExportButton from '../ui/ExportButton';
 
 // --- Sub-components ---
 
@@ -26,19 +31,7 @@ const Badge = ({ children, color = 'accent' }) => {
   );
 };
 
-const AnnonceSkeleton = () => (
-  <div className="bg-primary-card border border-primary-border/DEFAULT rounded-2xl overflow-hidden animate-pulse">
-    <div className="h-48 bg-primary-elevated" />
-    <div className="p-5 space-y-4">
-      <div className="h-6 bg-primary-elevated rounded w-3/4" />
-      <div className="h-8 bg-primary-elevated rounded w-1/2" />
-      <div className="grid grid-cols-2 gap-4">
-        <div className="h-4 bg-primary-elevated rounded" />
-        <div className="h-4 bg-primary-elevated rounded" />
-      </div>
-    </div>
-  </div>
-);
+// Removed Skeleton Component as imported
 
 const PriceComparisonBar = ({ price, estimated }) => {
   if (!estimated) return null;
@@ -82,6 +75,7 @@ export default function Annonces() {
   const [favorites, setFavorites] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const { showToast } = useToast();
 
   // Derived Filters from URL
   const filters = useMemo(() => ({
@@ -157,9 +151,11 @@ export default function Annonces() {
       });
       if (response.ok) {
         setAnnonces(prev => prev.map(a => a.id === id ? { ...a, is_favorite: !a.is_favorite } : a));
+        const isFav = annonces.find(a => a.id === id)?.is_favorite;
+        showToast({ message: isFav ? 'Retiré des favoris' : 'Ajouté aux favoris', type: 'info' });
       }
     } catch (err) {
-      console.error(err);
+      showToast({ message: 'Erreur lors de la modification', type: 'error' });
     }
   };
 
@@ -170,7 +166,8 @@ export default function Annonces() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[#0D0D14] pt-24 pb-20">
+    <PageTransition>
+      <div className="min-h-screen bg-[#0D0D14] pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="flex flex-col lg:flex-row gap-8">
@@ -359,6 +356,11 @@ export default function Annonces() {
                     <List size={18} />
                   </button>
                 </div>
+                <ExportButton 
+                  endpoint={`/api/annonces/export_csv/?${new URLSearchParams(filters).toString()}`}
+                  filename="autointel_annonces.csv"
+                  label="Exporter"
+                />
                 
                 <select 
                   value={filters.sort}
@@ -397,7 +399,7 @@ export default function Annonces() {
             {/* List/Grid Container */}
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
               {loading ? (
-                Array(6).fill(0).map((_, i) => <AnnonceSkeleton key={i} />)
+                Array(6).fill(0).map((_, i) => <SkeletonCard key={i} />)
               ) : annonces.length > 0 ? (
                 annonces.map((annonce) => (
                   <div 
@@ -483,22 +485,14 @@ export default function Annonces() {
                   </div>
                 ))
               ) : (
-                <div className="col-span-full py-20 text-center space-y-6 animate-fade-in">
-                   <div className="w-20 h-20 bg-primary-card rounded-[2.5rem] flex items-center justify-center mx-auto border border-primary-border/DEFAULT">
-                      <Trash2 size={32} className="text-primary-text-secondary" />
-                   </div>
-                   <div className="space-y-2">
-                     <h3 className="text-2xl font-bold text-white">Oops, c'est le désert !</h3>
-                     <p className="text-primary-text-secondary max-w-sm mx-auto">
-                       Aucun véhicule ne correspond à vos critères d'élite. Essayez d'être un peu moins exigeant (juste un peu).
-                     </p>
-                   </div>
-                   <button 
-                    onClick={() => setSearchParams({})}
-                    className="bg-accent text-white px-8 py-4 rounded-2xl font-bold hover:scale-105 transition-transform"
-                   >
-                     Réinitialiser tout
-                   </button>
+                <div className="col-span-full">
+                  <EmptyState 
+                    icon="🚗" 
+                    title="Aucune annonce trouvée" 
+                    subtitle="Essayez d'autres filtres" 
+                    actionLabel="Réinitialiser" 
+                    onAction={() => setSearchParams({})} 
+                  />
                 </div>
               )}
             </div>
@@ -541,6 +535,7 @@ export default function Annonces() {
           animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

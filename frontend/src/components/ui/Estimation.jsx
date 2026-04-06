@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { addEstimation } from '../../store/estimationHistorySlice'
+import ExportButton from './ExportButton'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const ACCENT = '#6C63FF'
@@ -971,6 +972,13 @@ export default function Estimation({ onSubmit, showResult, data }) {
                 background: '#1E1E2E', padding: '3px 10px', borderRadius: 999,
               }}>{history.length} / 5</span>
             )}
+            <div style={{ marginLeft: history.length === 0 ? 'auto' : 8 }}>
+               <ExportButton 
+                 endpoint="/api/estimation/export_mes_estimations/" 
+                 filename="mes_estimations.csv" 
+                 label="Exporter mon historique" 
+               />
+            </div>
           </div>
 
           {history.length === 0 ? (

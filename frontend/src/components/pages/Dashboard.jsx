@@ -10,6 +10,9 @@ import {
 import { fetchProfile } from '../../store/userSlice';
 import { debounce } from 'lodash';
 import { useNavigate } from 'react-router-dom';
+import { SkeletonCard, SkeletonKPI } from '../ui/Skeleton';
+import PageTransition from '../ui/PageTransition';
+import ExportButton from '../ui/ExportButton';
 
 // --- Sub-components for Sections ---
 
@@ -86,6 +89,13 @@ const HomeSection = ({ user, stats, medailles, onNavigate }) => (
        <div className="flex items-center gap-3 mb-6">
          <TrendingUp className="text-success" size={20} />
          <h3 className="text-lg font-black text-white">Activité du Compte</h3>
+         <div className="ml-auto">
+            <ExportButton 
+              endpoint="/api/estimation/export_mes_estimations/" 
+              filename="mes_estimations.csv" 
+              label="Télécharger mes données" 
+            />
+         </div>
        </div>
        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
          <div className="space-y-4">
@@ -205,7 +215,7 @@ const FavoritesSection = () => {
       <SectionHeader title="Mes Favoris" description="Votre sélection d'élite" badge={`${favorites.length} Items`} />
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {loading ? (
-          Array(3).fill(0).map((_, i) => <div key={i} className="h-48 bg-primary-card animate-pulse rounded-3xl" />)
+          Array(3).fill(0).map((_, i) => <SkeletonCard key={i} />)
         ) : favorites.length > 0 ? (
           favorites.map(f => (
             <div key={f.id} className="bg-primary-card border border-primary-border/DEFAULT rounded-3xl overflow-hidden group hover:border-accent transition-all">
@@ -320,7 +330,7 @@ const RecherchesSection = () => {
       <SectionHeader title="Historique de Recherche" description="Vos filtres d'élite sauvegardés" badge={`${recherches.length} Recherches`} />
       <div className="space-y-4">
         {loading ? (
-          Array(2).fill(0).map((_, i) => <div key={i} className="h-24 bg-primary-card animate-pulse rounded-2xl" />)
+          Array(2).fill(0).map((_, i) => <SkeletonKPI key={i} />)
         ) : recherches.length > 0 ? (
           recherches.map(r => (
             <div key={r.id} className="bg-primary-card border border-primary-border/DEFAULT rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between group hover:border-accent transition-all gap-4">
@@ -403,6 +413,7 @@ export default function Dashboard() {
   ];
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-[#0D0D14] flex flex-col lg:flex-row">
       
       {/* Sidebar Navigation */}
@@ -488,5 +499,6 @@ export default function Dashboard() {
         }
       `}</style>
     </div>
+    </PageTransition>
   );
 }

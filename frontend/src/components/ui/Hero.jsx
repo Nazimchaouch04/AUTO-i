@@ -4,7 +4,7 @@ import { ArrowRight, Play } from 'lucide-react'
 
 export default function Hero() {
   return (
-    <section id="accueil" className="relative pt-32 pb-20 overflow-hidden bg-primary-bg">
+    <section id="accueil" className="relative pt-32 pb-20 overflow-hidden bg-primary">
       {/* Background gradients */}
       <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-accent/5 blur-[120px] -z-10" />
       <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-accent-secondary/5 blur-[120px] -z-10" />

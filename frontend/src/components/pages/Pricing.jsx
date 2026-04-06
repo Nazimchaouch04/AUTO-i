@@ -40,14 +40,13 @@ export default function Pricing() {
       navigate('/login');
       return;
     }
-
     if (user?.plan_nom === planNom) return;
 
     setUpgrading(planNom);
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE}abonnement/upgrade/`, {
+      const response = await fetch(`${API_BASE}checkout/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,16 +57,14 @@ export default function Pricing() {
 
       const data = await response.json();
 
-      if (response.ok) {
-        // Refresh profile to see new plan
-        await dispatch(fetchProfile());
-        alert(`Félicitations ! Vous êtes maintenant passé au plan ${planNom.toUpperCase()}.`);
+      if (response.ok && data.url) {
+        window.location.href = data.url;
       } else {
-        setError(data.error || "Échec de la mise à jour.");
+        setError(data.error || "Échec de la création du paiement.");
+        setUpgrading(null);
       }
     } catch (err) {
-      setError("Erreur de connexion.");
-    } finally {
+      setError("Erreur lors de la création du paiement");
       setUpgrading(null);
     }
   };
@@ -137,7 +134,7 @@ export default function Pricing() {
             <div className="space-y-5 mb-10 flex-1">
               <FeatureItem active={true} text={`${plan.estimations_par_mois} Estimations / mois`} />
               <FeatureItem active={true} text={`${plan.alertes_max} Alertes Intelligentes`} />
-              <FeatureItem active={plan.export_csv} text="Export Data CSV" />
+              <FeatureItem active={plan.export_csv} text={plan.nom === 'free' ? 'Export CSV (Pro uniquement)' : 'Export CSV illimité'} />
               <FeatureItem active={plan.acces_api} text="Accès API Développeur" />
               <FeatureItem active={plan.nom !== 'free'} text="Support Prioritaire 24/7" />
               <FeatureItem active={plan.nom === 'business'} text="Accès Flotte & Garage" />

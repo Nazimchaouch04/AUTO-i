@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { logoutUser } from '../../store/userSlice'
-import { Bell, Search, Menu, X, TrendingUp, Users, Car, Settings, LogOut, Home, BarChart3, PieChart, Tag, Target, ChevronDown, User, Shield, Star, ArrowRight, Crown, Coins, ShoppingCart } from 'lucide-react'
+import { Bell, Search, Menu, X, TrendingUp, Users, Car, Settings, LogOut, Home, BarChart3, PieChart, Tag, Target, ChevronDown, User, Shield, Star, ArrowRight, Crown, Coins, ShoppingCart, Bot, FileText } from 'lucide-react'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -60,6 +60,18 @@ export default function Header() {
                 <Target className="w-4 h-4" />
                 <span>Estimation</span>
               </Link>
+              {isAuthenticated && (
+                <Link to="/assistant" className="text-primary-text-secondary hover:text-white transition-colors duration-200 flex items-center space-x-2">
+                  <Bot className="w-4 h-4" />
+                  <span>AI Assistant</span>
+                </Link>
+              )}
+              {isAuthenticated && (
+                <Link to="/rapports" className="text-primary-text-secondary hover:text-white transition-colors duration-200 flex items-center space-x-2">
+                  <FileText className="w-4 h-4" />
+                  <span>Rapports</span>
+                </Link>
+              )}
               <Link to="/dashboard" className="text-primary-text-secondary hover:text-white transition-colors duration-200 flex items-center space-x-2">
                 <BarChart3 className="w-4 h-4" />
                 <span>Dashboard</span>
@@ -139,6 +151,14 @@ export default function Header() {
                             <Swords className="w-4 h-4 text-accent" />
                             <span className="text-primary-text-primary text-sm font-medium">L'Arène</span>
                           </Link>
+                          <Link to="/assistant" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-primary-card transition-colors duration-200">
+                            <Bot className="w-4 h-4 text-accent" />
+                            <span className="text-primary-text-primary text-sm font-medium">AI Assistant</span>
+                          </Link>
+                          <Link to="/rapports" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-primary-card transition-colors duration-200">
+                            <FileText className="w-4 h-4 text-accent" />
+                            <span className="text-primary-text-primary text-sm font-medium">Rapports</span>
+                          </Link>
                           <Link to="/pricing" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-accent/10 border border-transparent hover:border-accent/20 transition-colors duration-200">
                             <Crown className="w-4 h-4 text-accent" />
                             <span className="text-accent text-sm font-bold">Passer Pro</span>
@@ -205,6 +225,12 @@ export default function Header() {
                   <BarChart3 className="w-4 h-4 text-accent-secondary" />
                   <span className="text-primary-text-primary">Dashboard</span>
                 </Link>
+                {isAuthenticated && (
+                  <Link to="/assistant" onClick={() => setIsSidebarOpen(false)} className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-primary-card transition-colors duration-200">
+                    <Bot className="w-4 h-4 text-accent" />
+                    <span className="text-primary-text-primary">AI Assistant</span>
+                  </Link>
+                )}
                 <Link to="/battles" onClick={() => setIsSidebarOpen(false)} className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-primary-card transition-colors duration-200">
                   <Swords className="w-4 h-4 text-accent" />
                   <span className="text-primary-text-primary">L'Arène</span>
