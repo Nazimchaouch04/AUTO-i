@@ -1,19 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
+import '../AppPages.css';
 
 export default function ClassementPage() {
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const load = async () => {
+      setError('');
+      setLoading(true);
       try {
         const { data } = await axiosClient.get('/api/gamification/leaderboard/');
         setRows(data?.results || data || []);
-      } catch (err) {
+      } catch {
         setRows([]);
+        setError('Impossible de charger le classement.');
       } finally {
         setLoading(false);
       }
@@ -21,36 +26,64 @@ export default function ClassementPage() {
     load();
   }, []);
 
+  const podium = useMemo(() => rows.slice(0, 3), [rows]);
+
   return (
-    <div style={{ color: '#F0F0F5', padding: '0 0 32px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 24, fontSize: 13 }}>
-        <span onClick={() => navigate('/dashboard')} style={{ color: '#6C63FF', cursor: 'pointer' }}>Accueil</span>
-        <span style={{ color: '#8B8BA0' }}>›</span>
-        <span style={{ color: '#8B8BA0' }}>Classement</span>
+    <div className="app-page">
+      <div className="app-breadcrumb">
+        <button type="button" onClick={() => navigate('/dashboard')}>Accueil</button>
+        <span>&gt;</span>
+        <span>Classement</span>
       </div>
-      <h1 style={{ fontSize: 22, fontWeight: 500, marginBottom: 8 }}>Classement</h1>
-      <p style={{ color: '#8B8BA0', fontSize: 14, marginBottom: 24 }}>Top joueurs AutoIntel.</p>
-      {loading && <p style={{ color: '#8B8BA0' }}>Chargement...</p>}
-      {!loading && rows.length === 0 && <p style={{ color: '#8B8BA0' }}>Aucune donnée de classement.</p>}
-      {!loading && rows.length > 0 && (
-        <div style={{ display: 'grid', gap: 8 }}>
-          {rows.slice(0, 20).map((u, idx) => (
-            <div
-              key={`${u.id}-${idx}`}
-              style={{
-                background: '#13131E',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 10,
-                padding: 10,
-                display: 'flex',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div>{idx + 1}. {u.username || 'Utilisateur'}</div>
-              <div style={{ color: '#6C63FF', fontWeight: 700 }}>{u.xp ?? 0} XP</div>
-            </div>
-          ))}
-        </div>
+
+      <div className="app-header">
+        <h1>Classement Joueurs</h1>
+        <p>Top performers AutoIntel par XP et activite.</p>
+      </div>
+
+      {loading && <div className="app-loading">Chargement du classement...</div>}
+      {!loading && error && <div className="app-error">{error}</div>}
+
+      {!loading && !error && rows.length === 0 && (
+        <div className="app-empty">Aucune donnee de classement disponible.</div>
+      )}
+
+      {!loading && !error && rows.length > 0 && (
+        <>
+          <div className="app-grid-three" style={{ marginBottom: 12 }}>
+            {podium.map((u, idx) => (
+              <article key={`podium-${u.id || idx}`} className="app-kpi accent">
+                <label>Top {idx + 1}</label>
+                <strong>{u.username || 'Utilisateur'}</strong>
+                <small>{Number(u.xp ?? 0).toLocaleString()} XP</small>
+              </article>
+            ))}
+          </div>
+
+          <article className="app-card">
+            <h3>Top 20</h3>
+            <table className="app-table" style={{ marginTop: 10 }}>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Joueur</th>
+                  <th>XP</th>
+                  <th>Niveau</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.slice(0, 20).map((u, idx) => (
+                  <tr key={`${u.id}-${idx}`}>
+                    <td>{idx + 1}</td>
+                    <td>{u.username || 'Utilisateur'}</td>
+                    <td>{Number(u.xp ?? 0).toLocaleString()}</td>
+                    <td>{u.niveau ?? 1}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </article>
+        </>
       )}
     </div>
   );

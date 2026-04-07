@@ -1,5 +1,6 @@
-from rest_framework import serializers
 from django.contrib.auth.models import User
+from rest_framework import serializers
+
 from .models import UserProfile
 
 
@@ -16,6 +17,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', {})
+
         for attr, value in user_data.items():
             setattr(instance.user, attr, value)
         instance.user.save()
@@ -35,16 +37,28 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'email', 'password', 'password_confirm', 'first_name', 'last_name']
 
+    def validate_username(self, value):
+        username = value.strip()
+        if not username:
+            raise serializers.ValidationError("Le nom d'utilisateur est obligatoire.")
+
+        if User.objects.filter(username__iexact=username).exists():
+            raise serializers.ValidationError("Ce nom d'utilisateur est deja utilise.")
+
+        return username
+
+    def validate_email(self, value):
+        email = value.strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError('Cet email est deja utilise.')
+        return email
+
     def validate(self, data):
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError({'password': 'Les mots de passe ne correspondent pas.'})
-
-        if User.objects.filter(email=data['email']).exists():
-            raise serializers.ValidationError({'email': 'Cet email est déjà utilisé.'})
 
         data.pop('password_confirm')
         return data
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
+        return User.objects.create_user(**validated_data)

@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
+import './AppPages.css';
+
+const formatCurrency = (value) => `${Math.round(Number(value || 0)).toLocaleString()} EUR`;
 
 export default function EstimationPage() {
   const navigate = useNavigate();
@@ -26,6 +29,7 @@ export default function EstimationPage() {
     setError('');
     setResult(null);
     setLoading(true);
+
     try {
       const payload = {
         ...form,
@@ -34,89 +38,102 @@ export default function EstimationPage() {
       };
       const { data } = await axiosClient.post('/api/estimation/', payload);
       setResult(data);
-    } catch (err) {
-      setError('Impossible de calculer l’estimation.');
+    } catch {
+      setError('Impossible de calculer l estimation.');
     } finally {
       setLoading(false);
     }
   };
 
+  const confidence = useMemo(() => {
+    if (!result) return null;
+    const spread = Number(result.fourchette_haute || 0) - Number(result.fourchette_basse || 0);
+    const center = Number(result.prix_estime || 1);
+    const ratio = center > 0 ? 1 - Math.min(spread / center, 1) : 0;
+    return Math.max(0, Math.round(ratio * 100));
+  }, [result]);
+
   return (
-    <div style={{ color: '#F0F0F5', padding: '0 0 32px' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          marginBottom: 24,
-          fontSize: 13,
-        }}
-      >
-        <span onClick={() => navigate('/dashboard')} style={{ color: '#6C63FF', cursor: 'pointer' }}>
-          Accueil
-        </span>
-        <span style={{ color: '#8B8BA0' }}>›</span>
-        <span style={{ color: '#8B8BA0' }}>Estimation</span>
+    <div className="app-page">
+      <div className="app-breadcrumb">
+        <button type="button" onClick={() => navigate('/dashboard')}>Accueil</button>
+        <span>&gt;</span>
+        <span>Estimation</span>
       </div>
 
-      <h1 style={{ fontSize: 22, fontWeight: 500, marginBottom: 8 }}>
-        Estimation ML
-      </h1>
-      <p style={{ color: '#8B8BA0', fontSize: 14, marginBottom: 24 }}>
-        Estimez le prix juste d’un véhicule.
-      </p>
+      <div className="app-header">
+        <h1>Estimation ML</h1>
+        <p>Calculez un prix cible et une fourchette intelligente pour chaque vehicule.</p>
+      </div>
 
-      <form onSubmit={onSubmit} style={{ display: 'grid', gap: 10, maxWidth: 560 }}>
-        <input name="marque" value={form.marque} onChange={onChange} required placeholder="Marque" style={inputStyle} />
-        <input name="modele" value={form.modele} onChange={onChange} required placeholder="Modèle" style={inputStyle} />
-        <input name="annee" type="number" value={form.annee} onChange={onChange} required placeholder="Année" style={inputStyle} />
-        <input name="kilometrage" type="number" value={form.kilometrage} onChange={onChange} required placeholder="Kilométrage" style={inputStyle} />
-        <select name="carburant" value={form.carburant} onChange={onChange} style={inputStyle}>
-          <option value="essence">Essence</option>
-          <option value="diesel">Diesel</option>
-          <option value="electrique">Électrique</option>
-          <option value="hybride">Hybride</option>
-        </select>
-        <select name="boite" value={form.boite} onChange={onChange} style={inputStyle}>
-          <option value="manuelle">Manuelle</option>
-          <option value="automatique">Automatique</option>
-        </select>
-        <button type="submit" disabled={loading} style={buttonStyle}>
-          {loading ? 'Calcul...' : 'Estimer'}
-        </button>
-      </form>
+      <div className="app-grid-two">
+        <article className="app-card">
+          <h3>Parametres vehicule</h3>
+          <p className="app-card-sub">Entrez les informations principales pour lancer l'analyse.</p>
 
-      {error && <p style={{ color: '#FCA5A5', marginTop: 12 }}>{error}</p>}
+          <form className="app-form" onSubmit={onSubmit}>
+            <div className="app-form-grid">
+              <input className="app-input" name="marque" value={form.marque} onChange={onChange} required placeholder="Marque" />
+              <input className="app-input" name="modele" value={form.modele} onChange={onChange} required placeholder="Modele" />
+              <input className="app-input" name="annee" type="number" value={form.annee} onChange={onChange} required placeholder="Annee" />
+              <input className="app-input" name="kilometrage" type="number" value={form.kilometrage} onChange={onChange} required placeholder="Kilometrage" />
+              <select className="app-select" name="carburant" value={form.carburant} onChange={onChange}>
+                <option value="essence">Essence</option>
+                <option value="diesel">Diesel</option>
+                <option value="electrique">Electrique</option>
+                <option value="hybride">Hybride</option>
+              </select>
+              <select className="app-select" name="boite" value={form.boite} onChange={onChange}>
+                <option value="manuelle">Manuelle</option>
+                <option value="automatique">Automatique</option>
+              </select>
+            </div>
 
-      {result && (
-        <div style={{ marginTop: 18, background: '#13131E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 14 }}>
-          <div style={{ color: '#8B8BA0', fontSize: 12 }}>Prix estimé</div>
-          <div style={{ color: '#6C63FF', fontSize: 30, fontWeight: 700 }}>
-            {Number(result.prix_estime || 0).toLocaleString()} €
-          </div>
-          <div style={{ color: '#8B8BA0', fontSize: 13 }}>
-            Fourchette: {Number(result.fourchette_basse || 0).toLocaleString()} € - {Number(result.fourchette_haute || 0).toLocaleString()} €
-          </div>
-        </div>
-      )}
+            <button className="app-btn" type="submit" disabled={loading}>
+              {loading ? 'Calcul en cours...' : 'Lancer estimation'}
+            </button>
+          </form>
+
+          {error && <div className="app-error" style={{ marginTop: 10 }}>{error}</div>}
+        </article>
+
+        <article className="app-card">
+          <h3>Resultat IA</h3>
+          <p className="app-card-sub">Prix recommande avec lecture de confiance.</p>
+
+          {!result && !loading && (
+            <div className="app-empty">Aucun resultat pour le moment. Lancez une estimation.</div>
+          )}
+
+          {loading && <div className="app-loading">Analyse en cours...</div>}
+
+          {result && (
+            <div className="app-stack">
+              <div className="app-kpi accent">
+                <label>Prix estime</label>
+                <strong>{formatCurrency(result.prix_estime)}</strong>
+                <small>Valeur centrale calculee</small>
+              </div>
+
+              <div className="app-kpi">
+                <label>Fourchette recommandee</label>
+                <strong>{formatCurrency(result.fourchette_basse)} - {formatCurrency(result.fourchette_haute)}</strong>
+                <small>Zone de negociation probable</small>
+              </div>
+
+              <div className="app-kpi good">
+                <label>Indice confiance</label>
+                <strong>{confidence ?? 0}%</strong>
+                <small>Stabilite de prediction sur ce profil vehicule</small>
+              </div>
+
+              <button className="app-btn-ghost" type="button" onClick={() => navigate('/annonces')}>
+                Comparer avec les annonces
+              </button>
+            </div>
+          )}
+        </article>
+      </div>
     </div>
   );
 }
-
-const inputStyle = {
-  background: '#13131E',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 8,
-  color: '#F0F0F5',
-  padding: '10px 12px',
-};
-
-const buttonStyle = {
-  border: 'none',
-  borderRadius: 8,
-  background: '#6C63FF',
-  color: '#fff',
-  padding: '10px 12px',
-  cursor: 'pointer',
-  fontWeight: 600,
-};

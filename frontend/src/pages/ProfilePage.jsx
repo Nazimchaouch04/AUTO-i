@@ -1,76 +1,120 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
 import { useDispatch } from 'react-redux';
 import { updateProfil } from '../store/userSlice';
+import './AppPages.css';
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const load = async () => {
+      setError('');
+      setLoading(true);
       try {
         const { data } = await axiosClient.get('/api/auth/profile/');
-        setProfile(data);
-        if (data?.profil) dispatch(updateProfil(data.profil));
-      } catch (err) {
+        setProfile(data || null);
+        if (data?.profil) {
+          dispatch(updateProfil(data.profil));
+        }
+      } catch {
         setError('Impossible de charger le profil.');
       } finally {
         setLoading(false);
       }
     };
+
     load();
   }, [dispatch]);
 
+  const stats = useMemo(() => {
+    const xp = Number(profile?.profil?.xp ?? 0);
+    const niveau = Number(profile?.profil?.niveau ?? 1);
+    const progress = clamp(Number(profile?.profil?.progression_pct ?? 0), 0, 100);
+    const autoCoins = Number(profile?.profil?.autocoin_balance ?? 0);
+    const alertes = Number(profile?.profil?.alertes_actives ?? 0);
+    return { xp, niveau, progress, autoCoins, alertes };
+  }, [profile]);
+
   return (
-    <div style={{ color: '#F0F0F5', padding: '0 0 32px' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          marginBottom: 24,
-          fontSize: 13,
-        }}
-      >
-        <span onClick={() => navigate('/dashboard')} style={{ color: '#6C63FF', cursor: 'pointer' }}>
-          Accueil
-        </span>
-        <span style={{ color: '#8B8BA0' }}>›</span>
-        <span style={{ color: '#8B8BA0' }}>Mon profil</span>
+    <div className="app-page">
+      <div className="app-breadcrumb">
+        <button type="button" onClick={() => navigate('/dashboard')}>Accueil</button>
+        <span>&gt;</span>
+        <span>Mon profil</span>
       </div>
 
-      <h1 style={{ fontSize: 22, fontWeight: 500, marginBottom: 8 }}>
-        Mon profil
-      </h1>
-      <p style={{ color: '#8B8BA0', fontSize: 14, marginBottom: 24 }}>
-        Statistiques et progression.
-      </p>
+      <div className="app-header">
+        <h1>Mon Profil</h1>
+        <p>Pilotez votre progression et vos donnees de compte AutoIntel.</p>
+      </div>
 
-      {loading && <p style={{ color: '#8B8BA0' }}>Chargement du profil...</p>}
-      {!loading && error && <p style={{ color: '#FCA5A5' }}>{error}</p>}
+      {loading && <div className="app-loading">Chargement du profil...</div>}
+      {!loading && error && <div className="app-error">{error}</div>}
 
       {!loading && !error && (
-        <div
-          style={{
-            background: '#13131E',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 10,
-            padding: 14,
-            display: 'grid',
-            gap: 8,
-          }}
-        >
-          <div>Username: <b>{profile?.user?.username || 'N/A'}</b></div>
-          <div>Email: <b>{profile?.user?.email || 'N/A'}</b></div>
-          <div>XP: <b>{profile?.profil?.xp ?? 0}</b></div>
-          <div>Niveau: <b>{profile?.profil?.niveau ?? 1}</b></div>
-          <div>AutoCoins: <b>{profile?.profil?.autocoin_balance ?? 0}</b></div>
-        </div>
+        <>
+          <div className="app-grid-two" style={{ marginBottom: 12 }}>
+            <article className="app-card">
+              <h3>Identite compte</h3>
+              <div className="app-stack" style={{ marginTop: 10 }}>
+                <div className="app-list-item">
+                  <div>
+                    <div className="app-list-title">Nom utilisateur</div>
+                    <div className="app-list-meta">{profile?.user?.username || 'N/A'}</div>
+                  </div>
+                  <span className="app-badge">Compte actif</span>
+                </div>
+                <div className="app-list-item">
+                  <div>
+                    <div className="app-list-title">Email</div>
+                    <div className="app-list-meta">{profile?.user?.email || 'N/A'}</div>
+                  </div>
+                  <span className="app-badge">Verifie</span>
+                </div>
+              </div>
+            </article>
+
+            <article className="app-card">
+              <h3>Progression joueur</h3>
+              <p className="app-card-sub">Niveau {stats.niveau} - {stats.xp.toLocaleString()} XP</p>
+              <div className="app-progress" style={{ marginTop: 10 }}>
+                <div style={{ width: `${stats.progress}%` }} />
+              </div>
+              <div className="app-list-meta" style={{ marginTop: 8 }}>{stats.progress.toFixed(0)}% vers le prochain niveau</div>
+
+              <div className="app-grid-half" style={{ marginTop: 12 }}>
+                <div className="app-kpi good">
+                  <label>AutoCoins</label>
+                  <strong>{stats.autoCoins.toLocaleString()}</strong>
+                  <small>Monnaie interne</small>
+                </div>
+                <div className="app-kpi accent">
+                  <label>Alertes actives</label>
+                  <strong>{stats.alertes}</strong>
+                  <small>Surveillance en cours</small>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div className="app-grid-half">
+            <button className="app-btn-ghost" type="button" onClick={() => navigate('/abonnement')}>
+              Gerer abonnement
+            </button>
+            <button className="app-btn-ghost" type="button" onClick={() => navigate('/classement')}>
+              Voir classement
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
