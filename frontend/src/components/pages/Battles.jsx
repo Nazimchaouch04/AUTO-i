@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Swords, Trophy, Users, Zap, ArrowRight, Flame } from 'lucide-react';
 import PageTransition from '../ui/PageTransition';
 import EmptyState from '../ui/EmptyState';
+import axiosClient from '../../api/axiosClient';
 
 const Battles = () => {
   const [battles, setBattles] = useState([]);
@@ -11,11 +12,9 @@ const Battles = () => {
   useEffect(() => {
     const fetchBattles = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/annonces/battles/', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-        });
-        const data = await response.json();
-        setBattles(data);
+        const response = await axiosClient.get('/api/annonces/battles/');
+        const data = response.data;
+        setBattles(data.results || data || []);
       } catch (e) {
         console.error("Erreur battles:", e);
       } finally {
@@ -51,7 +50,7 @@ const Battles = () => {
              </div>
              <p className="text-primary-text-secondary max-w-md text-right text-sm md:text-base">
                 Votez pour les meilleures affaires du moment et gagnez des AutoCoins. 
-                Les duels sont arbitrés par nos algorithmes de marché.
+                Les duels sont arbitrÃ©s par nos algorithmes de marchÃ©.
              </p>
           </div>
 
@@ -59,10 +58,10 @@ const Battles = () => {
              {battles.length === 0 ? (
                 <div className="col-span-full">
                   <EmptyState 
-                    icon="⚔️" 
+                    icon="âš”ï¸" 
                     title="Aucune room disponible" 
-                    subtitle="Crée la première room !" 
-                    actionLabel="Créer une battle" 
+                    subtitle="CrÃ©e la premiÃ¨re room !" 
+                    actionLabel="CrÃ©er une battle" 
                     onAction={() => { /* Navigate or open modal */ }}
                   />
                 </div>
@@ -107,7 +106,7 @@ const Battles = () => {
                              </div>
 
                              <div className="mt-8 flex items-center justify-between">
-                                <span className="text-[10px] font-black text-primary-text-secondary uppercase tracking-[0.2em]">Entrer dans l'arène</span>
+                                <span className="text-[10px] font-black text-primary-text-secondary uppercase tracking-[0.2em]">Entrer dans l'arÃ¨ne</span>
                                 <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white group-hover:bg-accent group-hover:scale-110 transition-all">
                                    <ArrowRight size={18} />
                                 </div>
@@ -121,7 +120,7 @@ const Battles = () => {
                   <div className="bg-dashed border-2 border-white/5 border-dashed rounded-[2.5rem] p-12 flex flex-col items-center justify-center text-center opacity-40 hover:opacity-100 transition-opacity">
                      <Swords size={40} className="text-accent mb-6" />
                      <h4 className="text-lg font-bold text-white mb-2">Pas de duel inspirant ?</h4>
-                     <p className="text-sm text-primary-text-secondary mb-6">Explorez les annonces et créez votre propre duel pour gagner +10 AC.</p>
+                     <p className="text-sm text-primary-text-secondary mb-6">Explorez les annonces et crÃ©ez votre propre duel pour gagner +10 AC.</p>
                      <Link to="/annonces" className="text-xs font-black text-accent uppercase tracking-widest hover:underline">
                         Voir les annonces
                      </Link>
@@ -136,3 +135,4 @@ const Battles = () => {
 };
 
 export default Battles;
+

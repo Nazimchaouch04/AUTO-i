@@ -1,0 +1,651 @@
+.register-page {
+  --r-bg-1: #111525;
+  --r-bg-2: #0c101c;
+  --r-surface: rgba(16, 20, 34, 0.92);
+  --r-surface-2: rgba(13, 17, 28, 0.86);
+  --r-border: rgba(255, 255, 255, 0.11);
+  --r-text: #f3f6ff;
+  --r-muted: #a6afca;
+  --r-primary: #2ec4b6;
+  --r-primary-2: #23a9d8;
+  --r-danger: #fca5a5;
+  width: min(1020px, calc(100vw - 28px));
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(152deg, var(--r-bg-1), var(--r-bg-2));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.42);
+  animation: register-appear 0.65s ease both;
+}
+
+.register-track-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    -56deg,
+    rgba(255, 255, 255, 0.03) 0 8px,
+    transparent 8px 24px
+  );
+  opacity: 0.55;
+  animation: register-track-shift 11s linear infinite;
+}
+
+.register-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 0.92fr 1.08fr;
+  min-height: 640px;
+}
+
+.register-card {
+  padding: 34px 30px;
+  background: linear-gradient(180deg, var(--r-surface), var(--r-surface-2));
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.register-card h1 {
+  margin: 0 0 7px;
+  color: var(--r-text);
+  font-size: 29px;
+  letter-spacing: -0.4px;
+}
+
+.register-subtitle {
+  margin: 0 0 16px;
+  color: var(--r-muted);
+  font-size: 14px;
+}
+
+.register-alert-error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 14px;
+  color: var(--r-danger);
+  font-size: 13px;
+}
+
+.register-form {
+  display: grid;
+  gap: 12px;
+}
+
+.register-field-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.register-input {
+  background: #0b0f1a;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  color: #f3f6ff;
+  padding: 11px 12px;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.register-input:focus {
+  outline: none;
+  border-color: rgba(46, 196, 182, 0.9);
+  box-shadow: 0 0 0 4px rgba(46, 196, 182, 0.2);
+  transform: translateY(-1px);
+}
+
+.register-input.is-invalid {
+  border-color: rgba(239, 68, 68, 0.7);
+}
+
+.register-field-error {
+  color: var(--r-danger);
+  font-size: 12px;
+}
+
+.register-submit-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 11px 12px;
+  background: linear-gradient(135deg, var(--r-primary), var(--r-primary-2));
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 180ms ease, filter 180ms ease, opacity 180ms ease;
+  box-shadow: 0 12px 22px rgba(35, 169, 216, 0.28);
+}
+
+.register-submit-btn:hover:enabled {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.register-submit-btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.register-login-link {
+  margin-top: 13px;
+  color: var(--r-muted);
+  font-size: 13px;
+}
+
+.register-login-link a {
+  color: #7fe8de;
+  text-decoration: none;
+}
+
+.register-login-link a:hover {
+  text-decoration: underline;
+}
+
+.register-showcase {
+  padding: 32px 32px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.register-tacho-wrap {
+  align-self: center;
+  width: 320px;
+  position: relative;
+  margin-bottom: 22px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.register-shift-lights {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.shift-light {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  background: #1f2d3f;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.24);
+  animation: register-shift-light 1.8s linear infinite;
+}
+
+.shift-light:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.shift-light:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.shift-light:nth-child(3) {
+  animation-delay: 240ms;
+}
+
+.shift-light:nth-child(4) {
+  animation-delay: 360ms;
+}
+
+.shift-light:nth-child(5) {
+  animation-delay: 480ms;
+}
+
+.register-tachometer {
+  width: 320px;
+  height: 320px;
+  position: relative;
+  border-radius: 999px;
+  background: radial-gradient(circle at center, #0a0f1a 0%, #0f1423 54%, #080c16 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 24px 48px rgba(0, 0, 0, 0.42);
+  overflow: hidden;
+}
+
+.register-tachometer::before {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.register-tacho-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 220deg,
+    #2ec4b6 0deg,
+    #2ec4b6 150deg,
+    #2fb8d2 210deg,
+    #fbbf24 260deg,
+    #f97316 300deg,
+    #ef4444 345deg,
+    #2ec4b6 360deg
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 24px), #000 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 24px), #000 0);
+  filter: drop-shadow(0 0 12px rgba(46, 196, 182, 0.35));
+}
+
+.register-tacho-redzone {
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  top: 22px;
+  right: 18px;
+  border-radius: 0 170px 0 0;
+  background: radial-gradient(circle at 0% 100%, rgba(239, 68, 68, 0.42), transparent 66%);
+  transform: rotate(22deg);
+}
+
+.register-tacho-marks {
+  position: absolute;
+  inset: 0;
+}
+
+.register-tacho-marks span {
+  position: absolute;
+  top: 20px;
+  left: calc(50% - 10px);
+  width: 20px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #b7c4df;
+  transform-origin: 50% 140px;
+}
+
+.register-tacho-marks span:nth-child(1) {
+  transform: rotate(-125deg);
+}
+
+.register-tacho-marks span:nth-child(2) {
+  transform: rotate(-95deg);
+}
+
+.register-tacho-marks span:nth-child(3) {
+  transform: rotate(-65deg);
+}
+
+.register-tacho-marks span:nth-child(4) {
+  transform: rotate(-35deg);
+}
+
+.register-tacho-marks span:nth-child(5) {
+  transform: rotate(-5deg);
+}
+
+.register-tacho-marks span:nth-child(6) {
+  transform: rotate(25deg);
+}
+
+.register-tacho-marks span:nth-child(7) {
+  transform: rotate(55deg);
+}
+
+.register-tacho-marks span:nth-child(8) {
+  transform: rotate(85deg);
+}
+
+.register-tacho-marks span:nth-child(9) {
+  transform: rotate(115deg);
+}
+
+.register-tacho-marks .warn {
+  color: #fca5a5;
+}
+
+.register-needle-pivot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+
+.register-needle {
+  position: absolute;
+  width: 118px;
+  height: 4px;
+  left: 0;
+  top: -2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f8fafc, #ff7373 78%, #ef4444 100%);
+  box-shadow: 0 0 18px rgba(255, 110, 110, 0.52);
+  transform-origin: left center;
+  transform: rotate(-120deg);
+  animation: register-needle-rev 2.4s cubic-bezier(0.25, 0.6, 0.2, 1) infinite;
+}
+
+.register-needle::after {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  left: -7px;
+  top: -5.5px;
+  border-radius: 999px;
+  background: #e5ebff;
+  box-shadow: 0 0 16px rgba(100, 120, 255, 0.56);
+}
+
+.register-tacho-center {
+  position: absolute;
+  inset: 90px;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: radial-gradient(circle at 50% 40%, #0e1526, #0a101c 70%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.register-tacho-center strong {
+  color: #f5f8ff;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -1px;
+  text-shadow: 0 0 18px rgba(239, 68, 68, 0.4);
+  animation: register-rpm-glow 1.2s ease-in-out infinite;
+}
+
+.register-tacho-center small {
+  color: #95a5ca;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.register-tacho-center em {
+  color: #ff9b9b;
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  margin-top: 2px;
+}
+
+.register-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 9px;
+  margin-bottom: 24px;
+}
+
+.register-chip {
+  border-radius: 999px;
+  border: 1px solid rgba(127, 232, 222, 0.42);
+  background: rgba(127, 232, 222, 0.12);
+  color: #ccfaf5;
+  padding: 7px 11px;
+  font-size: 12px;
+  animation: register-chip-float 3.6s ease-in-out infinite;
+}
+
+.register-chip:nth-child(2) {
+  animation-delay: 700ms;
+}
+
+.register-chip:nth-child(3) {
+  animation-delay: 1.3s;
+}
+
+.register-steps {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  max-width: 390px;
+  margin: 0 auto;
+}
+
+.register-steps::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, rgba(46, 196, 182, 0.5), transparent);
+  animation: register-line-glow 2.7s ease-in-out infinite;
+}
+
+.register-step {
+  position: relative;
+  padding: 9px 12px 9px 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #d8def1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  animation: register-slide-in 0.7s ease both;
+}
+
+.register-step::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #2ec4b6;
+  box-shadow: 0 0 0 0 rgba(46, 196, 182, 0.6);
+  animation: register-dot-beat 1.9s ease-out infinite;
+}
+
+.register-step strong {
+  color: #e8fefb;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.register-step span {
+  font-size: 13px;
+  color: var(--r-muted);
+}
+
+.register-step:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.register-step:nth-child(3) {
+  animation-delay: 220ms;
+}
+
+@media (max-width: 960px) {
+  .register-layout {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .register-card {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 24px;
+  }
+
+  .register-showcase {
+    padding: 20px 24px 22px;
+  }
+}
+
+@media (max-width: 620px) {
+  .register-page {
+    width: calc(100vw - 16px);
+    border-radius: 14px;
+  }
+
+  .register-card {
+    padding: 18px 16px;
+  }
+
+  .register-showcase {
+    padding: 18px 16px 20px;
+  }
+
+  .register-tacho-wrap {
+    width: 270px;
+    margin-bottom: 14px;
+  }
+
+  .register-tachometer {
+    width: 270px;
+    height: 270px;
+  }
+
+  .register-tacho-marks span {
+    top: 14px;
+    transform-origin: 50% 121px;
+  }
+
+  .register-tacho-center {
+    inset: 72px;
+  }
+
+  .register-tacho-center strong {
+    font-size: 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .register-page *,
+  .register-page *::before,
+  .register-page *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes register-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes register-track-shift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(42px);
+  }
+}
+
+@keyframes register-needle-rev {
+  0% {
+    transform: rotate(-120deg);
+  }
+  22% {
+    transform: rotate(-22deg);
+  }
+  38% {
+    transform: rotate(35deg);
+  }
+  52% {
+    transform: rotate(82deg);
+  }
+  64% {
+    transform: rotate(112deg);
+  }
+  70% {
+    transform: rotate(128deg);
+  }
+  76% {
+    transform: rotate(104deg);
+  }
+  100% {
+    transform: rotate(-118deg);
+  }
+}
+
+@keyframes register-shift-light {
+  0%,
+  50%,
+  100% {
+    background: #1f2d3f;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.24);
+  }
+  60% {
+    background: #34d399;
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.55);
+  }
+  72% {
+    background: #f59e0b;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.62);
+  }
+  84% {
+    background: #ef4444;
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.62);
+  }
+}
+
+@keyframes register-rpm-glow {
+  0%,
+  100% {
+    text-shadow: 0 0 14px rgba(56, 189, 248, 0.34);
+  }
+  50% {
+    text-shadow: 0 0 18px rgba(239, 68, 68, 0.52);
+  }
+}
+
+@keyframes register-chip-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes register-line-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes register-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes register-dot-beat {
+  0% {
+    box-shadow: 0 0 0 0 rgba(46, 196, 182, 0.6);
+  }
+  80% {
+    box-shadow: 0 0 0 9px rgba(46, 196, 182, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(46, 196, 182, 0);
+  }
+}

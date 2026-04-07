@@ -13,6 +13,7 @@ import EmptyState from '../ui/EmptyState';
 import { SkeletonCard } from '../ui/Skeleton';
 import { useToast } from '../ui/Toast';
 import ExportButton from '../ui/ExportButton';
+import axiosClient from '../../api/axiosClient';
 
 // --- Sub-components ---
 
@@ -111,10 +112,10 @@ export default function Annonces() {
     query.append('page', filters.page.toString());
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/annonces/?${query.toString()}`);
-      const data = await response.json();
+      const response = await axiosClient.get(`/api/annonces/?${query.toString()}`);
+      const data = response.data;
       setAnnonces(data.results || []);
-      setTotalCount(data.count || 0);
+      setTotalCount(data.count || (Array.isArray(data) ? data.length : 0));
     } catch (err) {
       console.error("Failed to fetch annonces", err);
     } finally {
@@ -143,13 +144,8 @@ export default function Annonces() {
   const toggleFavorite = async (id) => {
     if (!isAuthenticated) return; // Add login modal logic?
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/annonces/${id}/toggle_favori/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      });
-      if (response.ok) {
+      const response = await axiosClient.post(`/api/annonces/${id}/toggle_favori/`);
+      if (response.status >= 200 && response.status < 300) {
         setAnnonces(prev => prev.map(a => a.id === id ? { ...a, is_favorite: !a.is_favorite } : a));
         const isFav = annonces.find(a => a.id === id)?.is_favorite;
         showToast({ message: isFav ? 'Retiré des favoris' : 'Ajouté aux favoris', type: 'info' });

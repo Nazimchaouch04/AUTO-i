@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Swords, TrendingUp, Gauge, Calendar, 
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchProfile } from '../../store/userSlice';
+import axiosClient from '../../api/axiosClient';
 
 const Battle = () => {
   const { id } = useParams();
@@ -22,10 +23,8 @@ const Battle = () => {
   useEffect(() => {
     const fetchBattle = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/annonces/battles/${id}/`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-        });
-        const data = await response.json();
+        const response = await axiosClient.get(`/api/annonces/battles/${id}/`);
+        const data = response.data;
         setBattle(data);
       } catch (e) {
         console.error("Erreur battle:", e);
@@ -40,21 +39,16 @@ const Battle = () => {
     if (hasVoted || isVoting) return;
     setIsVoting(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/annonces/battles/${id}/vote/`, {
-        method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ vehicule_id: vehiculeId })
+      const response = await axiosClient.post(`/api/annonces/battles/${id}/vote/`, {
+        vehicule_id: vehiculeId
       });
-      if (response.ok) {
-        const data = await response.json();
-        setBattle(prev => ({ ...prev, votes_v1: data.votes_v1, votes_v2: data.votes_v2 }));
-        setHasVoted(true);
-        dispatch(fetchProfile()); // Refresh coins
-      }
-    } catch (e) {} finally { setIsVoting(false); }
+      const data = response.data;
+      setBattle(prev => ({ ...prev, votes_v1: data.votes_v1, votes_v2: data.votes_v2 }));
+      setHasVoted(true);
+      dispatch(fetchProfile()); // Refresh coins
+    } catch (e) {
+      console.error(e);
+    } finally { setIsVoting(false); }
   };
 
   if (loading) return (
@@ -63,7 +57,7 @@ const Battle = () => {
     </div>
   );
 
-  if (!battle) return <div>Battle non trouvée</div>;
+  if (!battle) return <div>Battle non trouvÃ©e</div>;
 
   const v1 = battle.vehicule_1_details;
   const v2 = battle.vehicule_2_details;
@@ -89,14 +83,14 @@ const Battle = () => {
             The Great <span className="text-accent">Showdown</span>
           </h1>
           <p className="text-primary-text-secondary max-w-xl mx-auto">
-            {battle.titre || "Duel d'élite entre deux bêtes de la route. Qui mérite votre vote ?"}
+            {battle.titre || "Duel d'Ã©lite entre deux bÃªtes de la route. Qui mÃ©rite votre vote ?"}
           </p>
         </div>
 
         {/* VS Interface */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-center gap-8 mb-20">
           
-          {/* Véhicule 1 */}
+          {/* VÃ©hicule 1 */}
           <div className={`relative transition-all duration-700 ${hasVoted ? (battle.votes_v1 >= battle.votes_v2 ? 'scale-105' : 'opacity-70 grayscale-[0.5]') : ''}`}>
              <div className="bg-primary-card border-2 border-accent/20 rounded-[3rem] p-8 relative overflow-hidden group">
                 <div className="absolute -left-10 -top-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl" />
@@ -104,8 +98,8 @@ const Battle = () => {
                   <div className="flex justify-between items-start mb-8">
                     <span className="px-4 py-1 bg-accent text-white text-[10px] font-black rounded-lg uppercase">Challenger A</span>
                     <div className="text-right">
-                       <p className="text-3xl font-black text-white">{v1.prix.toLocaleString()}€</p>
-                       <p className="text-xs text-primary-text-secondary">Prix de marché</p>
+                       <p className="text-3xl font-black text-white">{v1.prix.toLocaleString()}â‚¬</p>
+                       <p className="text-xs text-primary-text-secondary">Prix de marchÃ©</p>
                     </div>
                   </div>
                   <h3 className="text-3xl font-black text-white mb-2">{v1.vehicule_marque}</h3>
@@ -113,7 +107,7 @@ const Battle = () => {
                   
                   <div className="space-y-4 mb-10">
                     <StatRow icon={<Gauge size={16}/>} label="KM" value={v1.kilometrage.toLocaleString()} />
-                    <StatRow icon={<Calendar size={16}/>} label="Année" value={v1.annee} />
+                    <StatRow icon={<Calendar size={16}/>} label="AnnÃ©e" value={v1.annee} />
                     <StatRow icon={<Zap size={16}/>} label="Score" value={`${v1.score_affaire}/100`} highlight />
                   </div>
 
@@ -140,7 +134,7 @@ const Battle = () => {
              <div className="w-[2px] h-32 bg-gradient-to-b from-accent to-transparent" />
           </div>
 
-          {/* Véhicule 2 */}
+          {/* VÃ©hicule 2 */}
           <div className={`relative transition-all duration-700 ${hasVoted ? (battle.votes_v2 >= battle.votes_v1 ? 'scale-105' : 'opacity-70 grayscale-[0.5]') : ''}`}>
              <div className="bg-primary-card border-2 border-primary-border/20 rounded-[3rem] p-8 relative overflow-hidden group">
                 <div className="absolute -right-10 -top-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl" />
@@ -148,8 +142,8 @@ const Battle = () => {
                   <div className="flex justify-between items-start mb-8">
                     <span className="px-4 py-1 bg-primary-elevated text-white text-[10px] font-black rounded-lg uppercase">Challenger B</span>
                     <div className="text-right">
-                       <p className="text-3xl font-black text-white">{v2.prix.toLocaleString()}€</p>
-                       <p className="text-xs text-primary-text-secondary">Prix de marché</p>
+                       <p className="text-3xl font-black text-white">{v2.prix.toLocaleString()}â‚¬</p>
+                       <p className="text-xs text-primary-text-secondary">Prix de marchÃ©</p>
                     </div>
                   </div>
                   <h3 className="text-3xl font-black text-white mb-2">{v2.vehicule_marque}</h3>
@@ -157,7 +151,7 @@ const Battle = () => {
                   
                   <div className="space-y-4 mb-10">
                     <StatRow icon={<Gauge size={16}/>} label="KM" value={v2.kilometrage.toLocaleString()} />
-                    <StatRow icon={<Calendar size={16}/>} label="Année" value={v2.annee} />
+                    <StatRow icon={<Calendar size={16}/>} label="AnnÃ©e" value={v2.annee} />
                     <StatRow icon={<Zap size={16}/>} label="Score" value={`${v2.score_affaire}/100`} highlight />
                   </div>
 
@@ -208,7 +202,7 @@ const Battle = () => {
               </div>
               <h2 className="text-3xl md:text-5xl font-black text-white mb-6 tracking-tight">Verdict AutoIntel</h2>
               <p className="text-primary-text-secondary text-lg mb-10 max-w-2xl">
-                 Nos algorithmes ont analysé plus de 5,000 annonces similaires. Le gagnant technique basé sur la décote, la rareté et l'état général est :
+                 Nos algorithmes ont analysÃ© plus de 5,000 annonces similaires. Le gagnant technique basÃ© sur la dÃ©cote, la raretÃ© et l'Ã©tat gÃ©nÃ©ral est :
               </p>
               
               <div className="flex flex-col md:flex-row items-center gap-8">
@@ -245,3 +239,4 @@ const StatRow = ({ icon, label, value, highlight }) => (
 );
 
 export default Battle;
+

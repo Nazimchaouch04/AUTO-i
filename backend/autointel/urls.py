@@ -1,44 +1,36 @@
 from django.contrib import admin
-from django.urls import path, include
 from django.http import JsonResponse
-from django.shortcuts import redirect
+from django.urls import include, path
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView, TokenRefreshView, TokenVerifyView
+    TokenObtainPairView,
+    TokenRefreshView,
+    TokenVerifyView,
 )
 
 def api_root(request):
-    return JsonResponse({
-        'message': 'AutoIntel API',
-        'version': '1.0.0',
-        'endpoints': {
-            'admin': '/admin/',
-            'auth_login': '/api/auth/login/',
-            'auth_register': '/api/auth/register/',
-            'auth_profile': '/api/auth/profile/',
-            'annonces': '/api/annonces/',
-            'estimation': '/api/estimation/',
-            'dashboard': '/api/dashboard/',
-            'alertes': '/api/alertes/',
-            'subscriptions': '/api/subscriptions/',
-            'gamification': '/api/gamification/',
-            'ai_assistant': '/api/ai/',
-            'notifications': '/api/notifications/',
-            'rapports': '/api/rapports/',
+    return JsonResponse(
+        {
+            'message': 'AutoIntel API',
+            'backend': 'OK',
+            'frontend': 'http://127.0.0.1:5173',
+            'endpoints': [
+                '/admin/',
+                '/api/auth/login/',
+                '/api/annonces/',
+                '/api/estimation/',
+                '/api/dashboard/',
+            ],
         }
-    })
-
-def admin_dashboard_redirect(request):
-    return redirect('/admin/')
+    )
 
 urlpatterns = [
-    path('', api_root, name='api_root'),
+    path('', api_root),
     path('admin/', admin.site.urls),
-    path('admin-dashboard/', admin_dashboard_redirect),
 
-    # Authentication (JWT)
-    path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain'),
-    path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/auth/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    # Auth JWT
+    path('api/auth/login/', TokenObtainPairView.as_view()),
+    path('api/auth/refresh/', TokenRefreshView.as_view()),
+    path('api/auth/verify/', TokenVerifyView.as_view()),
     path('api/auth/', include('apps.users.urls')),
 
     # Apps
