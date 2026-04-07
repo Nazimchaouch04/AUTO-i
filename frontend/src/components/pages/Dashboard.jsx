@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { SkeletonCard, SkeletonKPI } from '../ui/Skeleton';
 import PageTransition from '../ui/PageTransition';
 import ExportButton from '../ui/ExportButton';
+import axiosClient from '../../api/axiosClient';
 
 // --- Sub-components for Sections ---
 
@@ -190,10 +191,8 @@ const FavoritesSection = () => {
   useEffect(() => {
     const fetchFavs = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/annonces/mes_favoris/', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-        });
-        const data = await response.json();
+        const response = await axiosClient.get('/api/annonces/mes_favoris/');
+        const data = response.data;
         setFavorites(data.results || []);
       } catch (e) { console.log(e); } finally { setLoading(false); }
     };
@@ -202,10 +201,7 @@ const FavoritesSection = () => {
 
   const removeFavorite = async (id) => {
      try {
-       await fetch(`http://127.0.0.1:8000/api/annonces/${id}/toggle_favori/`, {
-         method: 'POST',
-         headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-       });
+       await axiosClient.post(`/api/annonces/${id}/toggle_favori/`);
        setFavorites(f => f.filter(x => x.id !== id));
      } catch(e) {}
   };
@@ -297,10 +293,8 @@ const RecherchesSection = () => {
   useEffect(() => {
     const fetchRecherches = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/annonces/recherches/', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-        });
-        const data = await response.json();
+        const response = await axiosClient.get('/api/annonces/recherches/');
+        const data = response.data;
         setRecherches(data.results || data);
       } catch (e) { console.error(e); } finally { setLoading(false); }
     };
@@ -309,10 +303,7 @@ const RecherchesSection = () => {
 
   const deleteRecherche = async (id) => {
     try {
-      await fetch(`http://127.0.0.1:8000/api/annonces/recherches/${id}/`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-      });
+      await axiosClient.delete(`/api/annonces/recherches/${id}/`);
       setRecherches(r => r.filter(x => x.id !== id));
     } catch (e) {}
   };
@@ -386,17 +377,8 @@ export default function Dashboard() {
 
   const handleUpdateProfile = async (data) => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/profile/', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        },
-        body: JSON.stringify(data)
-      });
-      if (response.ok) {
-        dispatch(fetchProfile());
-      }
+      await axiosClient.put('/api/auth/profile/', data);
+      dispatch(fetchProfile());
     } catch (err) {
       console.error(err);
     }

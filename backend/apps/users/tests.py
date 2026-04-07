@@ -36,6 +36,14 @@ class AuthTest(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn('access', resp.data)
 
+    def test_login_with_email(self):
+        User.objects.create_user('emailuser', 'emailuser@test.com', 'pass1234')
+        resp = self.client.post('/api/auth/login/', {
+            'email': 'emailuser@test.com', 'password': 'pass1234'
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn('access', resp.data)
+
     def test_login_mauvais_mdp(self):
         User.objects.create_user('failuser', 'fail@test.com', 'correctpass')
         resp = self.client.post('/api/auth/login/', {

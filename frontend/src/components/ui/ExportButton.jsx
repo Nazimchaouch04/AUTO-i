@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import axiosClient from '../../api/axiosClient';
 
 export default function ExportButton({ endpoint, filename, label = 'Exporter CSV' }) {
   const [loading, setLoading] = useState(false);
@@ -16,12 +17,10 @@ export default function ExportButton({ endpoint, filename, label = 'Exporter CSV
     }
     setLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://127.0.0.1:8000${endpoint}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await axiosClient.get(endpoint, {
+        responseType: 'blob'
       });
-      if (!response.ok) throw new Error("Erreur export");
-      const blob = await response.blob();
+      const blob = response.data;
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

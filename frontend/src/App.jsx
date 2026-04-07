@@ -1,120 +1,160 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
-import { fetchProfile } from './store/userSlice'
-import { ToastProvider } from './components/ui/Toast'
-import LoadingScreen from './components/ui/LoadingScreen'
-import { AnimatePresence } from 'framer-motion'
-import MainLayout from './components/layout/MainLayout'
-import PrivateRoute from './components/auth/PrivateRoute'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { Suspense, lazy } from 'react';
 
-// --- Lazy Load Pages ---
-const Hero      = lazy(() => import('./components/ui/Hero'))
-const Features  = lazy(() => import('./components/ui/Features'))
-const Estimation = lazy(() => import('./components/ui/Estimation'))
-const MarketDashboard = lazy(() => import('./components/ui/Dashboard'))
-const Footer    = lazy(() => import('./components/ui/Footer'))
+// Layouts
+import MainLayout from './layouts/MainLayout';
+import AuthLayout from './layouts/AuthLayout';
 
-const Login     = lazy(() => import('./components/pages/auth/Login'))
-const Register  = lazy(() => import('./components/pages/auth/Register'))
-const Annonces  = lazy(() => import('./components/pages/Annonces'))
-const AnnonceDetail = lazy(() => import('./components/pages/AnnonceDetail'))
-const Marques   = lazy(() => import('./components/pages/Marques'))
-const Modeles   = lazy(() => import('./components/pages/Modeles'))
-const UserDashboard = lazy(() => import('./components/pages/Dashboard'))
-const Alertes   = lazy(() => import('./components/pages/Alertes'))
-const Statistiques = lazy(() => import('./components/pages/Statistiques'))
-const Admin     = lazy(() => import('./components/pages/Admin'))
-const Pricing   = lazy(() => import('./components/pages/Pricing'))
-const Boutique  = lazy(() => import('./components/pages/Boutique'))
-const Battle    = lazy(() => import('./components/pages/Battle'))
-const Comparison = lazy(() => import('./components/pages/Comparison'))
-const Battles    = lazy(() => import('./components/pages/Battles'))
-const AbonnementSucces = lazy(() => import('./components/pages/AbonnementSucces'))
-const Assistant = lazy(() => import('./components/pages/AssistantPage'))
-const Rapports = lazy(() => import('./components/pages/RapportsPage'))
+// Public
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 
-function App() {
-  const dispatch = useDispatch()
-  const { accessToken, isAuthenticated } = useSelector((state) => state.user)
-  const [showEstimationResult, setShowEstimationResult] = useState(false)
-  const [estimationData, setEstimationData] = useState(null)
-  const [darkMode, setDarkMode] = useState(true)
+// Auth
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 
-  useEffect(() => {
-    if (accessToken && isAuthenticated) {
-      dispatch(fetchProfile())
-    }
-  }, [dispatch, accessToken, isAuthenticated])
+// Core pages
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const AnnoncesPage = lazy(() => import('./pages/AnnoncesPage'));
+const EstimationPage = lazy(() => import('./pages/EstimationPage'));
+const AlertesPage = lazy(() => import('./pages/AlertesPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const AbonnementPage = lazy(() => import('./pages/AbonnementPage'));
 
-  const handleEstimationSubmit = (data) => {
-    setEstimationData(data)
-    setShowEstimationResult(true)
-    setTimeout(() => {
-      const resultElement = document.getElementById('estimationResult')
-      if (resultElement) resultElement.scrollIntoView({ behavior: 'smooth' })
-    }, 100)
-  }
+// Gamification pages
+const ClassementPage = lazy(() => import('./pages/gamification/ClassementPage'));
+const DefisPage = lazy(() => import('./pages/gamification/DefisPage'));
+const BoutiquePage = lazy(() => import('./pages/gamification/BoutiquePage'));
+const BattlesPage = lazy(() => import('./pages/gamification/BattlesPage'));
+const TournoisPage = lazy(() => import('./pages/gamification/TournoisPage'));
+const CollectionPage = lazy(() => import('./pages/gamification/CollectionPage'));
+const SeasonPassPage = lazy(() => import('./pages/gamification/SeasonPassPage'));
 
+function PageLoader() {
   return (
-    <ToastProvider>
-      <Router>
-        <MainLayout darkMode={darkMode} setDarkMode={setDarkMode}>
-          <Suspense fallback={<LoadingScreen />}>
-            <AnimatePresence mode="wait">
-              <Routes>
-                {/* Home */}
-                <Route path="/" element={
-                  <>
-                    <Hero />
-                    <Features />
-                    <Estimation 
-                      onSubmit={handleEstimationSubmit}
-                      showResult={showEstimationResult}
-                      data={estimationData}
-                    />
-                    <MarketDashboard />
-                    <Footer />
-                  </>
-                } />
-                
-                {/* Auth */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-
-                {/* Public Pages */}
-                <Route path="/annonces" element={<Annonces />} />
-                <Route path="/annonce/:id" element={<AnnonceDetail />} />
-                <Route path="/marques" element={<Marques />} />
-                <Route path="/modeles" element={<Modeles />} />
-                <Route path="/estimation" element={<Estimation onSubmit={handleEstimationSubmit} />} />
-                <Route path="/statistiques" element={<Statistiques />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/assistant" element={<PrivateRoute><Assistant /></PrivateRoute>} />
-                <Route path="/rapports" element={<PrivateRoute><Rapports /></PrivateRoute>} />
-                <Route path="/abonnement/succes" element={<PrivateRoute><AbonnementSucces /></PrivateRoute>} />
-                
-                {/* Private Pages */}
-                <Route path="/dashboard" element={<PrivateRoute><UserDashboard /></PrivateRoute>} />
-                <Route path="/profil" element={<PrivateRoute><UserDashboard /></PrivateRoute>} />
-                <Route path="/alertes" element={<PrivateRoute><Alertes /></PrivateRoute>} />
-                <Route path="/shop" element={<PrivateRoute><Boutique /></PrivateRoute>} />
-                <Route path="/battle/:id" element={<PrivateRoute><Battle /></PrivateRoute>} />
-                <Route path="/compare" element={<PrivateRoute><Comparison /></PrivateRoute>} />
-                <Route path="/battles" element={<PrivateRoute><Battles /></PrivateRoute>} />
-                
-                {/* Admin */}
-                <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
-                
-                {/* Redirection */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </AnimatePresence>
-          </Suspense>
-        </MainLayout>
-      </Router>
-    </ToastProvider>
-  )
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#0D0D14',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#6C63FF',
+        fontSize: 16,
+        gap: 12,
+      }}
+    >
+      <span
+        style={{
+          width: 20,
+          height: 20,
+          border: '2px solid #6C63FF',
+          borderTopColor: 'transparent',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+          display: 'inline-block',
+        }}
+      />
+      Chargement...
+      <style>{'@keyframes spin { to { transform: rotate(360deg); } }'}</style>
+    </div>
+  );
 }
 
-export default App
+function PrivateRoute({ children }) {
+  const { isAuthenticated } = useSelector((s) => s.user);
+  const location = useLocation();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  return children;
+}
+
+function NotFound() {
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#0D0D14',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#F0F0F5',
+        gap: 16,
+      }}
+    >
+      <div style={{ fontSize: 64 }}>🚗</div>
+      <h1 style={{ fontSize: 24, fontWeight: 500 }}>Page introuvable</h1>
+      <a
+        href="/"
+        style={{
+          color: '#6C63FF',
+          textDecoration: 'none',
+          fontSize: 14,
+        }}
+      >
+        ← Retour a l'accueil
+      </a>
+    </div>
+  );
+}
+
+export default function App() {
+  const { isAuthenticated } = useSelector((s) => s.user);
+
+  return (
+    <BrowserRouter>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public landing */}
+          <Route
+            path="/"
+            element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
+          />
+
+          {/* Auth */}
+          <Route element={<AuthLayout />}>
+            <Route
+              path="/login"
+              element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+            />
+            <Route
+              path="/register"
+              element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />}
+            />
+          </Route>
+
+          {/* Protected area */}
+          <Route
+            element={(
+              <PrivateRoute>
+                <MainLayout />
+              </PrivateRoute>
+            )}
+          >
+            {/* Core */}
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/annonces" element={<AnnoncesPage />} />
+            <Route path="/estimation" element={<EstimationPage />} />
+            <Route path="/alertes" element={<AlertesPage />} />
+            <Route path="/profil" element={<ProfilePage />} />
+            <Route path="/abonnement" element={<AbonnementPage />} />
+
+            {/* Gamification */}
+            <Route path="/classement" element={<ClassementPage />} />
+            <Route path="/defis" element={<DefisPage />} />
+            <Route path="/boutique" element={<BoutiquePage />} />
+            <Route path="/battles" element={<BattlesPage />} />
+            <Route path="/tournois" element={<TournoisPage />} />
+            <Route path="/collection" element={<CollectionPage />} />
+            <Route path="/season-pass" element={<SeasonPassPage />} />
+          </Route>
+
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
+  );
+}

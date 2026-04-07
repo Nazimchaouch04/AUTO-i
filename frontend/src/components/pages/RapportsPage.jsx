@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  FileText, Download, Plus, CreditCard, Eye, Trash2, 
+﻿import React, { useState, useEffect } from 'react';
+import {
+  FileText, Download, Plus, CreditCard, Eye, Trash2,
   Clock, CheckCircle, AlertCircle, TrendingUp, BarChart3,
-  Filter, Search, Calendar, DollarSign, Zap
+  Filter, Search, Calendar, DollarSign, Zap, X
 } from 'lucide-react';
 import PageTransition from '../ui/PageTransition';
 import EmptyState from '../ui/EmptyState';
 import { useToast } from '../ui/Toast';
+import axiosClient from '../../api/axiosClient';
 
-const API_BASE = 'http://127.0.0.1:8000/api/rapports/';
+const API_BASE = '/api/rapports/';
 
 export default function RapportsPage() {
   const [rapports, setRapports] = useState([]);
@@ -29,8 +30,6 @@ export default function RapportsPage() {
     alerte_source_id: '',
   });
 
-  const token = localStorage.getItem('access_token');
-
   useEffect(() => {
     fetchData();
   }, []);
@@ -38,18 +37,14 @@ export default function RapportsPage() {
   const fetchData = async () => {
     try {
       const [rapportsResponse, typesResponse, statsResponse] = await Promise.all([
-        fetch(API_BASE, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${API_BASE}types/`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${API_BASE}statistiques/`, { headers: { 'Authorization': `Bearer ${token}` } })
+        axiosClient.get(API_BASE),
+        axiosClient.get(`${API_BASE}types/`),
+        axiosClient.get(`${API_BASE}statistiques/`)
       ]);
 
-      const rapportsData = await rapportsResponse.json();
-      const typesData = await typesResponse.json();
-      const statsData = await statsResponse.json();
-
-      setRapports(rapportsData || []);
-      setTypesRapports(typesData || []);
-      setStatistiques(statsData || {});
+      setRapports(rapportsResponse.data || []);
+      setTypesRapports(typesResponse.data || []);
+      setStatistiques(statsResponse.data || {});
     } catch (err) {
       setError("Impossible de charger les rapports.");
     } finally {
@@ -62,96 +57,68 @@ export default function RapportsPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE}creer/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
+      const response = await axiosClient.post(`${API_BASE}creer/`, formData);
+      const data = response.data;
 
-      const data = await response.json();
+      showToast({ message: "Rapport créé avec succès", type: 'success' });
+      setShowCreateForm(false);
+      setSelectedType('');
+      resetForm();
+      fetchData();
 
-      if (response.ok) {
-        showToast({ message: "Rapport créé avec succès", type: 'success' });
-        setShowCreateForm(false);
-        setSelectedType('');
-        resetForm();
-        fetchData();
-        
-        // Redirige vers le paiement si nécessaire
-        if (data.statut_paiement === 'en_attente') {
-          handlePayment(data.id);
-        }
-      } else {
-        setError(data.error || "Une erreur est survenue.");
+      // Redirige vers le paiement si nécessaire
+      if (data.statut_paiement === 'en_attente') {
+        handlePayment(data.id);
       }
     } catch (err) {
-      setError("Erreur de connexion au serveur.");
+      setError(err?.response?.data?.error || "Une erreur est survenue.");
     }
   };
 
   const handlePayment = async (rapportId) => {
     try {
-      const response = await fetch(`${API_BASE}${rapportId}/payer/`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await axiosClient.post(`${API_BASE}${rapportId}/payer/`);
+      const data = response.data;
+
+      // Utiliser Stripe Elements pour le paiement
+      // Pour l'instant, on montre les informations
+      showToast({
+        message: `Paiement de ${data.prix}€ à confirmer`,
+        type: 'info'
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Utiliser Stripe Elements pour le paiement
-        // Pour l'instant, on montre les informations
-        showToast({ 
-          message: `Paiement de ${data.prix}€ à confirmer`, 
-          type: 'info' 
-        });
-      } else {
-        setError(data.error || "Erreur lors du paiement.");
-      }
     } catch (err) {
-      setError("Erreur de paiement.");
+      setError(err?.response?.data?.error || "Erreur de paiement.");
     }
   };
 
   const handleDownload = async (rapportId) => {
     try {
-      const response = await fetch(`${API_BASE}${rapportId}/telecharger/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await axiosClient.get(`${API_BASE}${rapportId}/telecharger/`, {
+        responseType: 'blob'
       });
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `rapport_${rapportId}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        showToast({ message: "Rapport téléchargé", type: 'success' });
-      } else {
-        const data = await response.json();
-        setError(data.error || "Erreur de téléchargement.");
-      }
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rapport_${rapportId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      showToast({ message: "Rapport téléchargé", type: 'success' });
     } catch (err) {
-      setError("Erreur de téléchargement.");
+      setError(err?.response?.data?.error || "Erreur de téléchargement.");
     }
   };
 
   const handleDelete = async (rapportId) => {
     if (!window.confirm("Supprimer ce rapport ?")) return;
-    
+
     try {
-      await fetch(`${API_BASE}${rapportId}/supprimer/`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
+      await axiosClient.delete(`${API_BASE}${rapportId}/supprimer/`);
+
       setRapports(prev => prev.filter(r => r.id !== rapportId));
       showToast({ message: "Rapport supprimé", type: 'success' });
       fetchData();
@@ -211,7 +178,7 @@ export default function RapportsPage() {
                  <FileText className="text-accent" size={36} />
                  Rapports <span className="text-accent">PDF</span>
               </h1>
-              <p className="text-primary-text-secondary">Analysez le marché automobile en détail.</p>
+              <p className="text-primary-text-secondary">Analysez le marchÃ© automobile en dÃ©tail.</p>
             </div>
             <button 
               onClick={() => { resetForm(); setShowCreateForm(true); }}
@@ -239,7 +206,7 @@ export default function RapportsPage() {
             <div className="bg-primary-card border border-primary-border/DEFAULT rounded-3xl p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-primary-text-secondary font-bold uppercase">Payés</p>
+                  <p className="text-sm text-primary-text-secondary font-bold uppercase">PayÃ©s</p>
                   <p className="text-2xl font-black text-white">{statistiques.rapports_payes || 0}</p>
                 </div>
                 <div className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center">
@@ -263,8 +230,8 @@ export default function RapportsPage() {
             <div className="bg-primary-card border border-primary-border/DEFAULT rounded-3xl p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-primary-text-secondary font-bold uppercase">Total Dépensé</p>
-                  <p className="text-2xl font-black text-white">{(statistiques.total_depense || 0).toFixed(2)}€</p>
+                  <p className="text-sm text-primary-text-secondary font-bold uppercase">Total DÃ©pensÃ©</p>
+                  <p className="text-2xl font-black text-white">{(statistiques.total_depense || 0).toFixed(2)}â‚¬</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center">
                   <DollarSign className="text-purple-400" size={24} />
@@ -323,16 +290,16 @@ export default function RapportsPage() {
                             {rapport.statut_display}
                           </span>
                         </span>
-                        <span>Créé le {new Date(rapport.created_at).toLocaleDateString()}</span>
+                        <span>CrÃ©Ã© le {new Date(rapport.created_at).toLocaleDateString()}</span>
                         {rapport.genere_at && (
-                          <span>Généré le {new Date(rapport.genere_at).toLocaleDateString()}</span>
+                          <span>GÃ©nÃ©rÃ© le {new Date(rapport.genere_at).toLocaleDateString()}</span>
                         )}
-                        <span className="font-bold text-accent">{rapport.prix}€</span>
+                        <span className="font-bold text-accent">{rapport.prix}â‚¬</span>
                       </div>
 
                       {rapport.annonce && (
                         <div className="text-sm text-primary-text-secondary">
-                          Véhicule : {rapport.annonce.titre}
+                          VÃ©hicule : {rapport.annonce.titre}
                         </div>
                       )}
                     </div>
@@ -351,7 +318,7 @@ export default function RapportsPage() {
                          <button 
                            onClick={() => handleDownload(rapport.id)}
                            className="p-3 bg-success/10 text-success rounded-2xl hover:bg-success/20 transition-all"
-                           title="Télécharger"
+                           title="TÃ©lÃ©charger"
                          >
                            <Download size={20} />
                          </button>
@@ -359,7 +326,7 @@ export default function RapportsPage() {
                        <button 
                          onClick={() => window.open(`/rapports/${rapport.id}`, '_blank')}
                          className="p-3 bg-primary-elevated text-white rounded-2xl hover:bg-accent/20 hover:text-accent transition-all"
-                         title="Voir détails"
+                         title="Voir dÃ©tails"
                        >
                          <Eye size={20} />
                        </button>
@@ -377,10 +344,10 @@ export default function RapportsPage() {
             ) : (
               <div className="col-span-full">
                 <EmptyState 
-                  icon="📄" 
-                  title="Aucun rapport créé" 
-                  subtitle="Générez votre premier rapport PDF pour analyser le marché" 
-                  actionLabel="Créer un rapport" 
+                  icon="ðŸ“„" 
+                  title="Aucun rapport crÃ©Ã©" 
+                  subtitle="GÃ©nÃ©rez votre premier rapport PDF pour analyser le marchÃ©" 
+                  actionLabel="CrÃ©er un rapport" 
                   onAction={() => { resetForm(); setShowCreateForm(true); }}
                 />
               </div>
@@ -400,14 +367,14 @@ export default function RapportsPage() {
                 </button>
 
                 <h2 className="text-3xl font-black text-white mb-8 pr-12">
-                  Créer un Nouveau Rapport
+                  CrÃ©er un Nouveau Rapport
                 </h2>
 
                 {/* Type Selection */}
                 {!selectedType ? (
                   <div className="space-y-4">
                     <p className="text-sm text-primary-text-secondary font-medium mb-6">
-                      Choisissez le type de rapport que vous souhaitez générer :
+                      Choisissez le type de rapport que vous souhaitez gÃ©nÃ©rer :
                     </p>
                     {typesRapports.map(type => (
                       <button
@@ -437,7 +404,7 @@ export default function RapportsPage() {
                        <label className="text-[10px] font-black text-primary-text-secondary uppercase tracking-widest pl-2">Titre du rapport</label>
                        <input 
                          required
-                         placeholder="Ex: Analyse BMW Série 3 2020"
+                         placeholder="Ex: Analyse BMW SÃ©rie 3 2020"
                          className="w-full bg-primary-elevated border border-primary-border/DEFAULT rounded-2xl p-5 text-white outline-none focus:border-accent transition-all font-bold"
                          value={formData.titre}
                          onChange={e => setFormData({...formData, titre: e.target.value})}
@@ -465,7 +432,7 @@ export default function RapportsPage() {
                         type="submit"
                         className="flex-1 bg-accent text-white py-4 rounded-2xl font-bold hover:scale-[1.02] transition-all shadow-xl shadow-accent/20"
                       >
-                        Créer et Payer {getTypeInfo(formData.type_rapport).prix}
+                        CrÃ©er et Payer {getTypeInfo(formData.type_rapport).prix}
                       </button>
                     </div>
                   </form>
@@ -496,3 +463,4 @@ export default function RapportsPage() {
     </PageTransition>
   );
 }
+

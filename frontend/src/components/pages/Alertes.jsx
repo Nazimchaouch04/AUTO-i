@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   Bell, Plus, Trash2, Edit3, Mail, Smartphone, 
   Search, Filter, Calendar, BellOff, CheckCircle2, 
@@ -8,9 +8,10 @@ import {
 import PageTransition from '../ui/PageTransition';
 import EmptyState from '../ui/EmptyState';
 import { useToast } from '../ui/Toast';
+import axiosClient from '../../api/axiosClient';
 
-const API_BASE = 'http://127.0.0.1:8000/api/alertes/';
-const NOTIFICATIONS_API = 'http://127.0.0.1:8000/api/notifications/';
+const API_BASE = '/api/alertes/';
+const NOTIFICATIONS_API = '/api/notifications/';
 
 export default function Alertes() {
   const [alertes, setAlertes] = useState([]);
@@ -21,7 +22,7 @@ export default function Alertes() {
   const [activeTab, setActiveTab] = useState('alertes'); // 'alertes' ou 'notifications'
   const { showToast } = useToast();
 
-  // États pour les notifications
+  // Ã‰tats pour les notifications
   const [canaux, setCanaux] = useState([]);
   const [notificationStatus, setNotificationStatus] = useState({});
   const [loadingNotifications, setLoadingNotifications] = useState(false);
@@ -42,8 +43,6 @@ export default function Alertes() {
     est_active: true
   });
 
-  const token = localStorage.getItem('access_token');
-
   useEffect(() => {
     fetchAlertes();
     if (activeTab === 'notifications') {
@@ -54,11 +53,9 @@ export default function Alertes() {
   const fetchAlertes = async () => {
     setLoading(true);
     try {
-      const response = await fetch(API_BASE, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      setAlertes(data.results || []);
+      const response = await axiosClient.get(API_BASE);
+      const data = response.data;
+      setAlertes(data.results || data || []);
     } catch (err) {
       setError("Impossible de charger vos alertes.");
     } finally {
@@ -70,17 +67,13 @@ export default function Alertes() {
     setLoadingNotifications(true);
     try {
       const [canauxResponse, statusResponse] = await Promise.all([
-        fetch(`${NOTIFICATIONS_API}canaux/`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${NOTIFICATIONS_API}status/`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+        axiosClient.get(`${NOTIFICATIONS_API}canaux/`),
+        axiosClient.get(`${NOTIFICATIONS_API}status/`)
       ]);
-      
-      const canauxData = await canauxResponse.json();
-      const statusData = await statusResponse.json();
-      
+
+      const canauxData = canauxResponse.data;
+      const statusData = statusResponse.data;
+
       setCanaux(canauxData || []);
       setNotificationStatus(statusData || {});
     } catch (err) {
@@ -92,25 +85,15 @@ export default function Alertes() {
 
   const handleToggleActive = async (alerte) => {
     try {
-      const response = await fetch(`${API_BASE}${alerte.id}/`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ est_active: !alerte.est_active })
-      });
-      if (response.ok) fetchAlertes();
+      await axiosClient.patch(`${API_BASE}${alerte.id}/`, { est_active: !alerte.est_active });
+      fetchAlertes();
     } catch (err) { console.error(err); }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Supprimer cette alerte ?")) return;
     try {
-      await fetch(`${API_BASE}${id}/`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      await axiosClient.delete(`${API_BASE}${id}/`);
       setAlertes(prev => prev.filter(a => a.id !== id));
       showToast({ message: "Alerte supprimée.", type: 'success' });
     } catch (err) { setError("Erreur lors de la suppression."); }
@@ -130,28 +113,19 @@ export default function Alertes() {
     if (payload.annee_min === '') delete payload.annee_min;
 
     try {
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        showToast({ message: editingId ? "Alerte mise à jour !" : "Alerte créée avec succès", type: 'success' });
-        setShowForm(false);
-        setEditingId(null);
-        resetForm();
-        fetchAlertes();
+      if (method === 'PUT') {
+        await axiosClient.put(url, payload);
       } else {
-        setError(data.detail || "Une erreur est survenue.");
+        await axiosClient.post(url, payload);
       }
+
+      showToast({ message: editingId ? "Alerte mise à jour !" : "Alerte créée avec succès", type: 'success' });
+      setShowForm(false);
+      setEditingId(null);
+      resetForm();
+      fetchAlertes();
     } catch (err) {
-      setError("Erreur de connexion au serveur.");
+      setError(err?.response?.data?.detail || "Erreur de connexion au serveur.");
     }
   };
 
@@ -187,57 +161,33 @@ export default function Alertes() {
   // Fonctions pour les notifications
   const handleAddCanal = async (canalType, valeur) => {
     try {
-      const response = await fetch(`${NOTIFICATIONS_API}canaux/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ canal: canalType, valeur })
-      });
-      
-      if (response.ok) {
-        showToast({ message: "Canal ajouté avec succès", type: 'success' });
-        fetchNotifications();
-      } else {
-        const data = await response.json();
-        showToast({ message: data.error || "Erreur lors de l'ajout", type: 'error' });
-      }
+      await axiosClient.post(`${NOTIFICATIONS_API}canaux/`, { canal: canalType, valeur });
+      showToast({ message: "Canal ajouté avec succès", type: 'success' });
+      fetchNotifications();
     } catch (err) {
-      showToast({ message: "Erreur de connexion", type: 'error' });
+      showToast({ message: err?.response?.data?.error || "Erreur de connexion", type: 'error' });
     }
   };
 
   const handleVerifyCanal = async (canalId) => {
     try {
-      const response = await fetch(`${NOTIFICATIONS_API}canaux/${canalId}/verifier/`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await axiosClient.post(`${NOTIFICATIONS_API}canaux/${canalId}/verifier/`);
+      const data = response.data;
+      showToast({
+        message: data.success ? "Canal vérifié avec succès" : "Échec de la vérification",
+        type: data.success ? 'success' : 'error'
       });
-      
-      const data = await response.json();
-      if (response.ok) {
-        showToast({ 
-          message: data.success ? "Canal vérifié avec succès" : "Échec de la vérification", 
-          type: data.success ? 'success' : 'error' 
-        });
-        fetchNotifications();
-      } else {
-        showToast({ message: data.error || "Erreur de vérification", type: 'error' });
-      }
+      fetchNotifications();
     } catch (err) {
-      showToast({ message: "Erreur de connexion", type: 'error' });
+      showToast({ message: err?.response?.data?.error || "Erreur de connexion", type: 'error' });
     }
   };
 
   const handleDeleteCanal = async (canalId) => {
     if (!window.confirm("Supprimer ce canal de notification ?")) return;
-    
+
     try {
-      await fetch(`${NOTIFICATIONS_API}canaux/${canalId}/supprimer/`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      await axiosClient.delete(`${NOTIFICATIONS_API}canaux/${canalId}/supprimer/`);
       showToast({ message: "Canal supprimé", type: 'success' });
       fetchNotifications();
     } catch (err) {
@@ -248,18 +198,8 @@ export default function Alertes() {
   const handleToggleCanal = async (canalId) => {
     try {
       const canal = canaux.find(c => c.id === canalId);
-      const response = await fetch(`${NOTIFICATIONS_API}canaux/${canalId}/activer/`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ is_active: !canal.is_active })
-      });
-      
-      if (response.ok) {
-        fetchNotifications();
-      }
+      await axiosClient.patch(`${NOTIFICATIONS_API}canaux/${canalId}/activer/`, { is_active: !canal.is_active });
+      fetchNotifications();
     } catch (err) {
       showToast({ message: "Erreur lors de la modification", type: 'error' });
     }
@@ -277,7 +217,7 @@ export default function Alertes() {
                <Bell className="text-accent" size={36} />
                Mes Alertes <span className="text-accent">Smart</span>
             </h1>
-            <p className="text-primary-text-secondary">Chassez les pépites du marché en temps réel.</p>
+            <p className="text-primary-text-secondary">Chassez les pÃ©pites du marchÃ© en temps rÃ©el.</p>
           </div>
           <button 
             onClick={() => { resetForm(); setShowForm(true); }}
@@ -345,13 +285,13 @@ export default function Alertes() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-xl font-bold text-white">{a.titre}</h3>
-                        {!a.est_active && <span className="px-2 py-0.5 bg-primary-elevated text-[10px] font-black text-primary-text-secondary uppercase rounded-full">Désactivée</span>}
+                        {!a.est_active && <span className="px-2 py-0.5 bg-primary-elevated text-[10px] font-black text-primary-text-secondary uppercase rounded-full">DÃ©sactivÃ©e</span>}
                       </div>
                       
                       <div className="flex flex-wrap gap-3 text-xs text-primary-text-secondary font-bold uppercase tracking-wider">
                          {a.marque && <span className="bg-primary-elevated px-3 py-1 rounded-full">{a.marque}</span>}
                          {a.modele && <span className="bg-primary-elevated px-3 py-1 rounded-full">{a.modele}</span>}
-                         {a.prix_max && <span className="bg-accent/5 text-accent px-3 py-1 rounded-full">Max {a.prix_max}€</span>}
+                         {a.prix_max && <span className="bg-accent/5 text-accent px-3 py-1 rounded-full">Max {a.prix_max}â‚¬</span>}
                          {a.carburant && <span className="bg-primary-elevated px-3 py-1 rounded-full">{a.carburant}</span>}
                       </div>
 
@@ -369,7 +309,7 @@ export default function Alertes() {
                        <button 
                          onClick={() => handleToggleActive(a)}
                          className={`p-3 rounded-2xl transition-all ${a.est_active ? 'bg-primary-elevated text-white hover:bg-warning/20 hover:text-warning' : 'bg-success/10 text-success hover:bg-success/20'}`}
-                         title={a.est_active ? "Désactiver" : "Activer"}
+                         title={a.est_active ? "DÃ©sactiver" : "Activer"}
                        >
                          {a.est_active ? <Zap size={20} /> : <Zap size={20} />}
                        </button>
@@ -392,10 +332,10 @@ export default function Alertes() {
             ) : (
               <div className="col-span-full">
                 <EmptyState 
-                  icon="🔔" 
-                  title="Aucune alerte créée" 
+                  icon="ðŸ””" 
+                  title="Aucune alerte crÃ©Ã©e" 
                   subtitle="Configure une alerte pour ne rater aucune bonne affaire" 
-                  actionLabel="Créer une alerte" 
+                  actionLabel="CrÃ©er une alerte" 
                   onAction={() => { resetForm(); setShowForm(true); }}
                 />
               </div>
@@ -416,13 +356,13 @@ export default function Alertes() {
                    </div>
                    <div className="flex justify-between items-center p-4 bg-primary-elevated rounded-2xl border border-primary-border/DEFAULT">
                       <span className="text-sm text-primary-text-secondary font-bold uppercase">Vitesse Veille</span>
-                      <span className="text-xs text-accent font-black">TEMPS RÉEL</span>
+                      <span className="text-xs text-accent font-black">TEMPS RÃ‰EL</span>
                    </div>
                 </div>
                 
                 <div className="mt-8 p-6 bg-accent/5 border border-accent/20 rounded-2xl">
                    <p className="text-xs text-primary-text-secondary font-medium leading-relaxed">
-                      Les alertes sont envoyées dès qu'une nouvelle annonce correspond à vos critères d'élite. 
+                      Les alertes sont envoyÃ©es dÃ¨s qu'une nouvelle annonce correspond Ã  vos critÃ¨res d'Ã©lite. 
                       <span className="block mt-2 text-white font-bold italic">"Soyez le premier sur le coup."</span>
                    </p>
                 </div>
@@ -447,7 +387,7 @@ export default function Alertes() {
                       <div>
                         <h3 className="text-xl font-bold text-white">Telegram</h3>
                         <p className="text-sm text-primary-text-secondary">
-                          {notificationStatus.telegram?.configured ? 'Configuré' : 'Non configuré'}
+                          {notificationStatus.telegram?.configured ? 'ConfigurÃ©' : 'Non configurÃ©'}
                         </p>
                       </div>
                     </div>
@@ -468,11 +408,11 @@ export default function Alertes() {
                           <div className="flex items-center gap-2 mt-1">
                             {canal.is_verified ? (
                               <span className="flex items-center gap-1 text-xs text-success">
-                                <Check size={12} /> Vérifié
+                                <Check size={12} /> VÃ©rifiÃ©
                               </span>
                             ) : (
                               <span className="flex items-center gap-1 text-xs text-warning">
-                                <AlertTriangle size={12} /> Non vérifié
+                                <AlertTriangle size={12} /> Non vÃ©rifiÃ©
                               </span>
                             )}
                             <span className={`text-xs ${canal.is_active ? 'text-success' : 'text-primary-text-secondary'}`}>
@@ -485,7 +425,7 @@ export default function Alertes() {
                             <button
                               onClick={() => handleVerifyCanal(canal.id)}
                               className="p-2 bg-accent/10 text-accent rounded-xl hover:bg-accent/20"
-                              title="Vérifier"
+                              title="VÃ©rifier"
                             >
                               <Send size={16} />
                             </button>
@@ -493,7 +433,7 @@ export default function Alertes() {
                           <button
                             onClick={() => handleToggleCanal(canal.id)}
                             className={`p-2 rounded-xl ${canal.is_active ? 'bg-success/10 text-success' : 'bg-gray-700 text-gray-400'}`}
-                            title={canal.is_active ? "Désactiver" : "Activer"}
+                            title={canal.is_active ? "DÃ©sactiver" : "Activer"}
                           >
                             <Zap size={16} />
                           </button>
@@ -517,7 +457,7 @@ export default function Alertes() {
                       <li>Cherchez <strong>@AutoIntelBot</strong> sur Telegram</li>
                       <li>Envoyez <strong>/start</strong></li>
                       <li>Copiez votre <strong>Chat ID</strong></li>
-                      <li>Ajoutez-le ici et vérifiez</li>
+                      <li>Ajoutez-le ici et vÃ©rifiez</li>
                     </ol>
                   </div>
 
@@ -555,7 +495,7 @@ export default function Alertes() {
                       <div>
                         <h3 className="text-xl font-bold text-white">WhatsApp</h3>
                         <p className="text-sm text-primary-text-secondary">
-                          {notificationStatus.whatsapp?.configured ? 'Configuré' : 'Non configuré'}
+                          {notificationStatus.whatsapp?.configured ? 'ConfigurÃ©' : 'Non configurÃ©'}
                         </p>
                       </div>
                     </div>
@@ -572,15 +512,15 @@ export default function Alertes() {
                     <div key={canal.id} className="mb-4 p-4 bg-primary-elevated rounded-2xl">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-white font-medium">Numéro: {canal.display_valeur}</p>
+                          <p className="text-sm text-white font-medium">NumÃ©ro: {canal.display_valeur}</p>
                           <div className="flex items-center gap-2 mt-1">
                             {canal.is_verified ? (
                               <span className="flex items-center gap-1 text-xs text-success">
-                                <Check size={12} /> Vérifié
+                                <Check size={12} /> VÃ©rifiÃ©
                               </span>
                             ) : (
                               <span className="flex items-center gap-1 text-xs text-warning">
-                                <AlertTriangle size={12} /> Non vérifié
+                                <AlertTriangle size={12} /> Non vÃ©rifiÃ©
                               </span>
                             )}
                             <span className={`text-xs ${canal.is_active ? 'text-success' : 'text-primary-text-secondary'}`}>
@@ -601,7 +541,7 @@ export default function Alertes() {
                           <button
                             onClick={() => handleToggleCanal(canal.id)}
                             className={`p-2 rounded-xl ${canal.is_active ? 'bg-success/10 text-success' : 'bg-gray-700 text-gray-400'}`}
-                            title={canal.is_active ? "Désactiver" : "Activer"}
+                            title={canal.is_active ? "DÃ©sactiver" : "Activer"}
                           >
                             <Zap size={16} />
                           </button>
@@ -619,7 +559,7 @@ export default function Alertes() {
 
                   <div className="mt-6 p-4 bg-green-500/5 border border-green-500/20 rounded-2xl">
                     <p className="text-xs text-primary-text-secondary font-medium mb-2">
-                      <strong>Note :</strong> Nécessite un compte Twilio (gratuit pour les tests)
+                      <strong>Note :</strong> NÃ©cessite un compte Twilio (gratuit pour les tests)
                     </p>
                   </div>
 
@@ -627,7 +567,7 @@ export default function Alertes() {
                     <div className="mt-4">
                       <input
                         type="text"
-                        placeholder="Votre numéro WhatsApp (ex: +213123456789)"
+                        placeholder="Votre numÃ©ro WhatsApp (ex: +213123456789)"
                         className="w-full bg-primary-elevated border border-primary-border/DEFAULT rounded-2xl p-4 text-white outline-none focus:border-accent transition-all font-bold mb-3"
                         id="whatsapp-number"
                       />
@@ -659,19 +599,19 @@ export default function Alertes() {
                 </h3>
                 <div className="space-y-4">
                    <div className="p-4 bg-primary-elevated rounded-2xl">
-                      <h4 className="text-sm font-bold text-white mb-2">🚀 Temps Réel</h4>
+                      <h4 className="text-sm font-bold text-white mb-2">ðŸš€ Temps RÃ©el</h4>
                       <p className="text-xs text-primary-text-secondary">
-                        Recevez les alertes instantanément sur Telegram et WhatsApp dès qu'une nouvelle annonce correspond à vos critères.
+                        Recevez les alertes instantanÃ©ment sur Telegram et WhatsApp dÃ¨s qu'une nouvelle annonce correspond Ã  vos critÃ¨res.
                       </p>
                    </div>
                    <div className="p-4 bg-primary-elevated rounded-2xl">
-                      <h4 className="text-sm font-bold text-white mb-2">🔧 Configuration Simple</h4>
+                      <h4 className="text-sm font-bold text-white mb-2">ðŸ”§ Configuration Simple</h4>
                       <p className="text-xs text-primary-text-secondary">
-                        Connectez vos canaux en quelques clics. Le bot vous guidera pas à pas.
+                        Connectez vos canaux en quelques clics. Le bot vous guidera pas Ã  pas.
                       </p>
                    </div>
                    <div className="p-4 bg-accent/5 border border-accent/20 rounded-2xl">
-                      <h4 className="text-sm font-bold text-accent mb-2">💡 Pro Tip</h4>
+                      <h4 className="text-sm font-bold text-accent mb-2">ðŸ’¡ Pro Tip</h4>
                       <p className="text-xs text-primary-text-secondary">
                         Activez plusieurs canaux pour ne jamais rater une bonne affaire !
                       </p>
@@ -696,7 +636,7 @@ export default function Alertes() {
               </button>
 
               <h2 className="text-3xl font-black text-white mb-8 pr-12">
-                {editingId ? "Modifier l'Alerte" : "Créer une Nouvelle Alerte d'Élite"}
+                {editingId ? "Modifier l'Alerte" : "CrÃ©er une Nouvelle Alerte d'Ã‰lite"}
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -704,7 +644,7 @@ export default function Alertes() {
                    <label className="text-[10px] font-black text-primary-text-secondary uppercase tracking-widest pl-2">Nom de l'alerte</label>
                    <input 
                      required
-                     placeholder="Ex: BMW Série 3 Prochain Coup"
+                     placeholder="Ex: BMW SÃ©rie 3 Prochain Coup"
                      className="w-full bg-primary-elevated border border-primary-border/DEFAULT rounded-2xl p-5 text-white outline-none focus:border-accent transition-all font-bold"
                      value={formData.titre}
                      onChange={e => setFormData({...formData, titre: e.target.value})}
@@ -722,7 +662,7 @@ export default function Alertes() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-primary-text-secondary uppercase tracking-widest pl-2">Modèle</label>
+                    <label className="text-[10px] font-black text-primary-text-secondary uppercase tracking-widest pl-2">ModÃ¨le</label>
                     <input 
                       placeholder="A3, 308..."
                       className="w-full bg-primary-elevated border border-primary-border/DEFAULT rounded-2xl p-4 text-white outline-none focus:border-accent transition-all font-bold"
@@ -734,7 +674,7 @@ export default function Alertes() {
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-primary-text-secondary uppercase tracking-widest pl-2">Prix Max (€)</label>
+                    <label className="text-[10px] font-black text-primary-text-secondary uppercase tracking-widest pl-2">Prix Max (â‚¬)</label>
                     <input 
                       type="number"
                       className="w-full bg-primary-elevated border border-primary-border/DEFAULT rounded-2xl p-4 text-white outline-none focus:border-accent transition-all font-bold"
@@ -752,7 +692,7 @@ export default function Alertes() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-primary-text-secondary uppercase tracking-widest pl-2">Année Min</label>
+                    <label className="text-[10px] font-black text-primary-text-secondary uppercase tracking-widest pl-2">AnnÃ©e Min</label>
                     <input 
                       type="number"
                       className="w-full bg-primary-elevated border border-primary-border/DEFAULT rounded-2xl p-4 text-white outline-none focus:border-accent transition-all font-bold"
@@ -770,7 +710,7 @@ export default function Alertes() {
                        <option value="">Tous</option>
                        <option value="essence">Essence</option>
                        <option value="diesel">Diesel</option>
-                       <option value="electrique">Électrique</option>
+                       <option value="electrique">Ã‰lectrique</option>
                        <option value="hybride">Hybride</option>
                     </select>
                   </div>
@@ -811,7 +751,7 @@ export default function Alertes() {
                     type="submit"
                     className="flex-1 bg-accent text-white py-5 rounded-2xl font-black text-lg hover:scale-[1.02] transition-all shadow-xl shadow-accent/20"
                   >
-                    🚀 {editingId ? "Sauvegarder les modifications" : "Lancer la Veille d'Élite"}
+                    ðŸš€ {editingId ? "Sauvegarder les modifications" : "Lancer la Veille d'Ã‰lite"}
                   </button>
                 </div>
               </form>
@@ -841,3 +781,4 @@ export default function Alertes() {
     </PageTransition>
   );
 }
+

@@ -5,7 +5,7 @@ import { loginUser, clearError } from '../../../store/userSlice';
 import { Loader2, AlertCircle, Mail, Lock } from 'lucide-react';
 
 const Login = () => {
-  const [email, setEmail] = useState(localStorage.getItem('remembered_email') || '');
+  const [identifier, setIdentifier] = useState(localStorage.getItem('remembered_login') || '');
   const [password, setPassword] = useState('');
   const [shake, setShake] = useState(false);
 
@@ -23,8 +23,8 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    localStorage.setItem('remembered_email', email);
-    const resultAction = await dispatch(loginUser({ email, password }));
+    localStorage.setItem('remembered_login', identifier);
+    const resultAction = await dispatch(loginUser({ identifier, password }));
     if (loginUser.rejected.match(resultAction)) {
       setShake(true);
       setTimeout(() => setShake(false), 500);
@@ -64,17 +64,17 @@ const Login = () => {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#F0F0F5', marginBottom: 8 }}>Adresse email</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#F0F0F5', marginBottom: 8 }}>Email ou nom d'utilisateur</label>
             <div style={{ position: 'relative' }}>
               <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#55557A' }}>
                 <Mail size={18} />
               </div>
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="jean.dupont@email.com"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="email@domaine.com ou username"
                 style={{
                   width: '100%', padding: '14px 14px 14px 44px', borderRadius: 12,
                   background: 'rgba(0,0,0,0.2)', border: '1px solid #2a2a3e', color: '#fff', fontSize: 15,

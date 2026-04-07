@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Check, X, Zap, Crown, Building, ArrowRight, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { fetchProfile } from '../../store/userSlice';
+import axiosClient from '../../api/axiosClient';
 
-const API_BASE = 'http://127.0.0.1:8000/api/subscriptions/';
+const API_BASE = '/api/subscriptions/';
 
 export default function Pricing() {
   const [plans, setPlans] = useState([]);
@@ -12,8 +12,7 @@ export default function Pricing() {
   const [upgrading, setUpgrading] = useState(null);
   const [error, setError] = useState(null);
   
-  const { user, accessToken, isAuthenticated } = useSelector(state => state.user);
-  const dispatch = useDispatch();
+  const { user, isAuthenticated } = useSelector(state => state.user);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,8 +21,8 @@ export default function Pricing() {
 
   const fetchPlans = async () => {
     try {
-      const response = await fetch(`${API_BASE}plans/`);
-      const data = await response.json();
+      const response = await axiosClient.get(`${API_BASE}plans/`);
+      const data = response.data;
       // Sort plans: Free, Pro, Business
       const order = { 'free': 0, 'pro': 1, 'business': 2 };
       const sorted = (data.results || data).sort((a, b) => order[a.nom] - order[b.nom]);
@@ -46,25 +45,17 @@ export default function Pricing() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE}checkout/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({ plan: planNom })
-      });
+      const response = await axiosClient.post(`${API_BASE}checkout/`, { plan: planNom });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.url) {
+      if (data.url) {
         window.location.href = data.url;
       } else {
         setError(data.error || "Échec de la création du paiement.");
         setUpgrading(null);
       }
     } catch (err) {
-      setError("Erreur lors de la création du paiement");
+      setError(err?.response?.data?.error || "Erreur lors de la création du paiement");
       setUpgrading(null);
     }
   };
@@ -87,10 +78,10 @@ export default function Pricing() {
           <span className="text-xs font-black text-accent uppercase tracking-widest">Offres Limited Edition</span>
         </div>
         <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-6">
-          Passez à la <span className="text-accent underline decoration-4 underline-offset-8">Vitesse Supérieure</span>
+          Passez Ã  la <span className="text-accent underline decoration-4 underline-offset-8">Vitesse SupÃ©rieure</span>
         </h1>
         <p className="text-xl text-primary-text-secondary max-w-2xl mx-auto">
-          Débloquez la puissance d'AutoIntel et devenez le maître du marché automobile.
+          DÃ©bloquez la puissance d'AutoIntel et devenez le maÃ®tre du marchÃ© automobile.
         </p>
       </div>
 
@@ -112,7 +103,7 @@ export default function Pricing() {
           >
             {plan.nom === 'pro' && (
               <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-accent text-white text-[10px] font-black uppercase tracking-widest px-6 py-2 rounded-full shadow-lg">
-                Recommandé
+                RecommandÃ©
               </div>
             )}
 
@@ -126,7 +117,7 @@ export default function Pricing() {
               </div>
               <h3 className="text-2xl font-black text-white capitalize mb-2">{plan.nom}</h3>
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-black text-white">{parseInt(plan.prix_mensuel)}€</span>
+                <span className="text-4xl font-black text-white">{parseInt(plan.prix_mensuel)}â‚¬</span>
                 <span className="text-primary-text-secondary font-medium">/mois</span>
               </div>
             </div>
@@ -134,10 +125,10 @@ export default function Pricing() {
             <div className="space-y-5 mb-10 flex-1">
               <FeatureItem active={true} text={`${plan.estimations_par_mois} Estimations / mois`} />
               <FeatureItem active={true} text={`${plan.alertes_max} Alertes Intelligentes`} />
-              <FeatureItem active={plan.export_csv} text={plan.nom === 'free' ? 'Export CSV (Pro uniquement)' : 'Export CSV illimité'} />
-              <FeatureItem active={plan.acces_api} text="Accès API Développeur" />
+              <FeatureItem active={plan.export_csv} text={plan.nom === 'free' ? 'Export CSV (Pro uniquement)' : 'Export CSV illimitÃ©'} />
+              <FeatureItem active={plan.acces_api} text="AccÃ¨s API DÃ©veloppeur" />
               <FeatureItem active={plan.nom !== 'free'} text="Support Prioritaire 24/7" />
-              <FeatureItem active={plan.nom === 'business'} text="Accès Flotte & Garage" />
+              <FeatureItem active={plan.nom === 'business'} text="AccÃ¨s Flotte & Garage" />
             </div>
 
             <button
@@ -166,8 +157,8 @@ export default function Pricing() {
       <div className="mt-32 max-w-4xl mx-auto text-center bg-primary-card/50 border border-primary-border/DEFAULT rounded-[3rem] p-12 backdrop-blur-sm animate-fade-in-up">
         <h2 className="text-3xl font-black text-white mb-6">Besoin d'une solution sur-mesure ?</h2>
         <p className="text-primary-text-secondary mb-10 text-lg">
-          Vous êtes un concessionnaire ou gérez une flotte importante ? 
-          Nos experts vous accompagnent avec des outils dédiés.
+          Vous Ãªtes un concessionnaire ou gÃ©rez une flotte importante ? 
+          Nos experts vous accompagnent avec des outils dÃ©diÃ©s.
         </p>
         <button className="px-10 py-5 bg-white text-black font-black rounded-2xl hover:scale-105 transition-all text-sm uppercase tracking-widest">
           Contacter les experts
@@ -200,3 +191,5 @@ function FeatureItem({ active, text }) {
     </div>
   );
 }
+
+
