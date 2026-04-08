@@ -20,6 +20,7 @@ urlpatterns = [
 
     # Apps
     path('api/annonces/', include('apps.annonces.urls')),
+    path('api/vehicules/', include('apps.vehicules.urls_library')),
     path('api/estimation/', include('apps.estimation.urls')),
     path('api/dashboard/', include('apps.dashboard.urls')),
     path('api/alertes/', include('apps.alertes.urls')),

@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'django_filters',
     'apps.users',
     'apps.annonces',
+    'apps.vehicules',
     'apps.estimation',
     'apps.dashboard',
     'apps.alertes',
@@ -48,6 +49,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'autointel.urls'
 
+# Custom Admin Site will be configured after apps load
+# from .admin import admin_site  # Deferred to avoid AppRegistryNotReady
+# ADMIN_SITE = admin_site
+
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -67,17 +73,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'autointel.wsgi.application'
 
 # BASE DE DONNÉES — SQLite pour dev, PostgreSQL pour prod
-if DEBUG:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    DATABASES = {
-        'default': dj_database_url.parse(config('DATABASE_URL'))
-    }
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
