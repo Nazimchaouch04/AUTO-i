@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ProfilJoueurViewSet, TransactionViewSet, DefiViewSet, BoutiqueViewSet
+from .views import ProfilJoueurViewSet, TransactionViewSet, DefiViewSet, BoutiqueViewSet, GamificationViewSet
 
 profil_view = ProfilJoueurViewSet.as_view({
     'get': 'profil'
@@ -24,6 +24,7 @@ shop_buy_view = BoutiqueViewSet.as_view({
 })
 
 urlpatterns = [
+    path('', GamificationViewSet.as_view({'get': 'list'}), name='gamification_root'),
     path('profil/', profil_view, name='profil'),
     path('profil/add-coins/', add_coins_view, name='add_coins'),
     path('leaderboard/', leaderboard_view, name='leaderboard'),

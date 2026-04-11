@@ -9,6 +9,48 @@ from .models import Plan, Abonnement
 from .serializers import PlanSerializer, AbonnementSerializer
 from .stripe_service import create_checkout_session, handle_webhook
 
+class SubscriptionsRootView(APIView):
+    """
+    Vue racine pour les subscriptions - liste les endpoints disponibles
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Retourne la liste des endpoints de subscriptions disponibles
+        """
+        base_url = "/api/subscriptions/"
+        endpoints = [
+            {
+                "path": "plans/",
+                "method": "GET",
+                "description": "Voir les plans d'abonnement disponibles"
+            },
+            {
+                "path": "mon-abonnement/",
+                "method": "GET",
+                "description": "Voir mon abonnement actuel"
+            },
+            {
+                "path": "checkout/",
+                "method": "POST",
+                "description": "Procéder au paiement d'un abonnement"
+            },
+            {
+                "path": "webhook/",
+                "method": "POST",
+                "description": "Webhook Stripe pour les paiements"
+            }
+        ]
+        
+        return Response({
+            "message": "Bienvenue dans les abonnements AutoIntel!",
+            "plans": f"{base_url}plans/",
+            "my_subscription": f"{base_url}mon-abonnement/",
+            "checkout": f"{base_url}checkout/",
+            "endpoints": endpoints
+        })
+
 class PlanListView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):

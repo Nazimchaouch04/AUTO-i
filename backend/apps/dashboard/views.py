@@ -220,6 +220,69 @@ class DashboardViewSet(viewsets.ViewSet):
 
         return Response(deals)
 
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def user_stats(self, request):
+        """New: /api/dashboard/user-stats/ - Stats personnalisées utilisateur"""
+        user = request.user
+        
+        # Alertes actives
+        alertes_count = getattr(user, 'alertes', []).filter(is_active=True).count()
+        
+        # Favoris
+        favoris_count = user.favoris.count()
+        
+        # Estimations récentes (10 dernières)
+        try:
+            from apps.estimation.models import EstimationHistory
+            estimations = EstimationHistory.objects.filter(user=user).order_by('-created_at')[:5]
+            recent_estimations = [{
+                'id': e.id,
+                'marque': e.marque,
+                'modele': e.modele,
+                'prix_estime': float(e.prix_estime),
+                'date': e.created_at.date()
+            } for e in estimations]
+        except:
+            recent_estimations = []
+        
+        # Abonnement
+        try:
+            abonnement = getattr(user, 'abonnement', None)
+            sub_status = abonnement.plan.nom if abonnement else 'free'
+            estimations_limite = abonnement.plan.estimations_par_mois if abonnement else 10
+        except:
+            sub_status = 'free'
+            estimations_limite = 10
+        
+        # Gamification
+        try:
+            from apps.gamification.models import Player
+            player = getattr(user, 'player', None)
+            xp = player.xp if player else 0
+            ac_balance = player.autocoin_balance if player else 100
+        except:
+            xp = 0
+            ac_balance = 100
+        
+        # Notifications récentes
+        try:
+            from apps.notifications.models import Notification
+            recent_notifs = Notification.objects.filter(user=user).order_by('-created_at')[:3]
+            notifs = len(recent_notifs)
+        except:
+            notifs = 0
+        
+        return Response({
+            'alertes_actives': alertes_count,
+            'favoris': favoris_count,
+            'estimations_recentes': recent_estimations,
+            'abonnement': sub_status,
+            'estimations_limite': estimations_limite,
+            'xp': xp,
+            'autocoin_balance': ac_balance,
+            'notifications_non_lues': notifs
+        })
+
     @action(detail=False, methods=['get'])
     def stats(self, request):
         """Endpoint legacy /api/dashboard/stats/ - gardé pour compatibilité"""
@@ -305,3 +368,4 @@ class DashboardViewSet(viewsets.ViewSet):
             'annonces_par_jour': annonces_par_jour,
             'bonnes_affaires_recentes': bonnes_affaires_recentes,
         })
+

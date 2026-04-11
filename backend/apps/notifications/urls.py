@@ -5,10 +5,12 @@ from .views import (
     SupprimerCanalView,
     ActiverCanalView,
     NotificationStatusView,
-    HistoriqueNotificationsView
+    HistoriqueNotificationsView,
+    NotificationsRootView
 )
 
 urlpatterns = [
+    path('', NotificationsRootView.as_view(), name='notifications_root'),
     path('canaux/', CanauxNotificationView.as_view(), name='canaux_notification'),
     path('canaux/<int:canal_id>/verifier/', VerifierCanalView.as_view(), name='verifier_canal'),
     path('canaux/<int:canal_id>/supprimer/', SupprimerCanalView.as_view(), name='supprimer_canal'),

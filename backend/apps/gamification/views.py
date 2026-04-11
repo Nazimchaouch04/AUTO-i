@@ -7,6 +7,66 @@ from .models import ProfilJoueur, Transaction, DefiJoueur, Defi, BoutiqueItem, A
 from .serializers import ProfilJoueurSerializer, TransactionSerializer, DefiJoueurSerializer, BoutiqueItemSerializer, AchatJoueurSerializer
 
 
+class GamificationViewSet(viewsets.ViewSet):
+    """
+    Vue racine pour la gamification - liste les endpoints disponibles
+    """
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        """
+        Retourne la liste des endpoints de gamification disponibles
+        """
+        base_url = "/api/gamification/"
+        endpoints = [
+            {
+                "path": "profil/",
+                "method": "GET",
+                "description": "Voir le profil de gamification de l'utilisateur"
+            },
+            {
+                "path": "profil/add-coins/",
+                "method": "POST",
+                "description": "Ajouter des AutoCoins au profil"
+            },
+            {
+                "path": "leaderboard/",
+                "method": "GET",
+                "description": "Voir le classement des joueurs"
+            },
+            {
+                "path": "transactions/",
+                "method": "GET",
+                "description": "Voir l'historique des transactions"
+            },
+            {
+                "path": "defis/",
+                "method": "GET",
+                "description": "Voir les défis disponibles"
+            },
+            {
+                "path": "shop/",
+                "method": "GET",
+                "description": "Voir les articles de la boutique"
+            },
+            {
+                "path": "shop/<id>/buy/",
+                "method": "POST",
+                "description": "Acheter un article de la boutique"
+            }
+        ]
+        
+        return Response({
+            "message": "Bienvenue dans la gamification AutoIntel!",
+            "user_profile": f"{base_url}profil/",
+            "leaderboard": f"{base_url}leaderboard/",
+            "transactions": f"{base_url}transactions/",
+            "defis": f"{base_url}defis/",
+            "shop": f"{base_url}shop/",
+            "endpoints": endpoints
+        })
+
+
 class BoutiqueViewSet(viewsets.ModelViewSet):
     queryset = BoutiqueItem.objects.all()
     serializer_class = BoutiqueItemSerializer

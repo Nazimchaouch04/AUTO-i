@@ -1,9 +1,15 @@
-import anthropic
 from django.conf import settings
 from decouple import config
 from apps.annonces.models import Annonce, Vehicule
 from django.db.models import Avg, Count, Min, Max, Q
 import logging
+
+# Lazy import anthropic to avoid startup errors
+anthropic = None
+try:
+    import anthropic
+except ImportError:
+    anthropic = None
 
 logger = logging.getLogger(__name__)
 

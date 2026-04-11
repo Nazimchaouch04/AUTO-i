@@ -4,10 +4,12 @@ from .views import (
     MessageView, 
     MessageRapideView,
     UsageStatsView,
-    SupprimerConversationView
+    SupprimerConversationView,
+    AIAssistantRootView
 )
 
 urlpatterns = [
+    path('', AIAssistantRootView.as_view(), name='ai_root'),
     path('conversations/', ConversationListView.as_view(), name='conversations'),
     path('conversations/<int:conv_id>/messages/', MessageView.as_view(), name='messages'),
     path('conversations/<int:conv_id>/supprimer/', SupprimerConversationView.as_view(), name='supprimer_conversation'),

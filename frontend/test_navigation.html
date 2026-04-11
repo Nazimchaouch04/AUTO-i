@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Navigation AutoIntel</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #0D0D14; color: #F0F0F5; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .route-item { margin: 10px 0; padding: 15px; background: #13131E; border-radius: 8px; border-left: 4px solid #6C63FF; }
+        .route-link { color: #6C63FF; text-decoration: none; font-weight: bold; }
+        .route-link:hover { text-decoration: underline; }
+        .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
+        .status.success { background: #10B981; color: white; }
+        .status.error { background: #EF4444; color: white; }
+        .status.pending { background: #F59E0B; color: white; }
+        h1 { color: #6C63FF; }
+        .instructions { background: rgba(108,99,255,0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Navigation AutoIntel</h1>
+        
+        <div class="instructions">
+            <h3>Instructions de test :</h3>
+            <ol>
+                <li>Ouvrez le serveur de développement : http://localhost:5174</li>
+                <li>Cliquez sur chaque lien ci-dessous pour vérifier que la page se charge correctement</li>
+                <li>Vérifiez qu'il n'y a pas d'erreurs 404 ou d'erreurs JavaScript dans la console</li>
+                <li>Pour les routes protégées, vous devriez être redirigé vers la page de login</li>
+            </ol>
+        </div>
+
+        <h2>Routes Publiques</h2>
+        <div class="route-item">
+            <a href="http://localhost:5174/" target="_blank" class="route-link">1. Landing Page (/)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/login" target="_blank" class="route-link">2. Login (/login)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/register" target="_blank" class="route-link">3. Register (/register)</a>
+            <span class="status pending">À tester</span>
+        </div>
+
+        <h2>Routes Protégées (nécessitent authentification)</h2>
+        <div class="route-item">
+            <a href="http://localhost:5174/dashboard" target="_blank" class="route-link">4. Dashboard (/dashboard)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/annonces" target="_blank" class="route-link">5. Annonces (/annonces)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/estimation" target="_blank" class="route-link">6. Estimation (/estimation)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/alertes" target="_blank" class="route-link">7. Alertes (/alertes)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/profil" target="_blank" class="route-link">8. Profil (/profil)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/abonnement" target="_blank" class="route-link">9. Abonnement (/abonnement)</a>
+            <span class="status pending">À tester</span>
+        </div>
+
+        <h2>Routes Gamification</h2>
+        <div class="route-item">
+            <a href="http://localhost:5174/classement" target="_blank" class="route-link">10. Classement (/classement)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/defis" target="_blank" class="route-link">11. Défis (/defis)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/boutique" target="_blank" class="route-link">12. Boutique (/boutique)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/battles" target="_blank" class="route-link">13. Battles (/battles)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/tournois" target="_blank" class="route-link">14. Tournois (/tournois)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/collection" target="_blank" class="route-link">15. Collection (/collection)</a>
+            <span class="status pending">À tester</span>
+        </div>
+        <div class="route-item">
+            <a href="http://localhost:5174/season-pass" target="_blank" class="route-link">16. Season Pass (/season-pass)</a>
+            <span class="status pending">À tester</span>
+        </div>
+
+        <h2>Points de vérification</h2>
+        <ul>
+            <li>La page se charge sans erreur 404</li>
+            <li>Pas d'erreurs JavaScript dans la console du navigateur</li>
+            <li>Les composants s'affichent correctement</li>
+            <li>Pour les routes protégées : redirection vers /login si non authentifié</li>
+            <li>Les styles CSS s'appliquent correctement</li>
+            <li>Les images et icônes s'affichent</li>
+        </ul>
+    </div>
+
+    <script>
+        // Script pour marquer les liens comme testés
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('.route-link');
+            links.forEach(link => {
+                link.addEventListener('click', function() {
+                    const statusSpan = this.nextElementSibling;
+                    if (statusSpan && statusSpan.classList.contains('pending')) {
+                        statusSpan.classList.remove('pending');
+                        statusSpan.classList.add('success');
+                        statusSpan.textContent = 'Testé';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
