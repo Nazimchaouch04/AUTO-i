@@ -74,10 +74,16 @@ frontend/build/
 # Database
 *.sqlite3
 *.db
+postgresql/
+sqlite_export/
+backend/postgresql/
+backend/sqlite_export/
 
 # Media files
 media/
 static/
+staticfiles/
+backend/staticfiles/
 
 # Coverage reports
 htmlcov/

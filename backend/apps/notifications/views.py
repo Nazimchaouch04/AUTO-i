@@ -18,6 +18,59 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+class NotificationsRootView(APIView):
+    """
+    Vue racine pour les notifications - liste les endpoints disponibles
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Retourne la liste des endpoints de notifications disponibles
+        """
+        base_url = "/api/notifications/"
+        endpoints = [
+            {
+                "path": "canaux/",
+                "method": "GET",
+                "description": "Voir les canaux de notification"
+            },
+            {
+                "path": "canaux/<id>/verifier/",
+                "method": "POST",
+                "description": "Vérifier un canal de notification"
+            },
+            {
+                "path": "canaux/<id>/activer/",
+                "method": "POST",
+                "description": "Activer un canal de notification"
+            },
+            {
+                "path": "canaux/<id>/supprimer/",
+                "method": "DELETE",
+                "description": "Supprimer un canal de notification"
+            },
+            {
+                "path": "status/",
+                "method": "GET",
+                "description": "Voir le statut des notifications"
+            },
+            {
+                "path": "historique/",
+                "method": "GET",
+                "description": "Voir l'historique des notifications"
+            }
+        ]
+        
+        return Response({
+            "message": "Bienvenue dans les notifications AutoIntel!",
+            "channels": f"{base_url}canaux/",
+            "status": f"{base_url}status/",
+            "history": f"{base_url}historique/",
+            "endpoints": endpoints
+        })
+
 class CanauxNotificationView(APIView):
     """Gestion des canaux de notification de l'utilisateur."""
     permission_classes = [IsAuthenticated]

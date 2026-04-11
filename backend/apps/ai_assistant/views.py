@@ -9,6 +9,59 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+class AIAssistantRootView(APIView):
+    """
+    Vue racine pour l'AI Assistant - liste les endpoints disponibles
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Retourne la liste des endpoints de l'AI Assistant disponibles
+        """
+        base_url = "/api/ai/"
+        endpoints = [
+            {
+                "path": "conversations/",
+                "method": "GET",
+                "description": "Voir la liste des conversations"
+            },
+            {
+                "path": "conversations/",
+                "method": "POST",
+                "description": "Créer une nouvelle conversation"
+            },
+            {
+                "path": "conversations/<id>/messages/",
+                "method": "GET",
+                "description": "Voir les messages d'une conversation"
+            },
+            {
+                "path": "conversations/<id>/messages/",
+                "method": "POST",
+                "description": "Envoyer un message dans une conversation"
+            },
+            {
+                "path": "message-rapide/",
+                "method": "POST",
+                "description": "Envoyer un message rapide sans conversation"
+            },
+            {
+                "path": "usage-stats/",
+                "method": "GET",
+                "description": "Voir les statistiques d'utilisation de l'IA"
+            }
+        ]
+        
+        return Response({
+            "message": "Bienvenue dans l'AI Assistant AutoIntel!",
+            "conversations": f"{base_url}conversations/",
+            "quick_message": f"{base_url}message-rapide/",
+            "usage_stats": f"{base_url}usage-stats/",
+            "endpoints": endpoints
+        })
+
 class ConversationListView(APIView):
     permission_classes = [IsAuthenticated]
 

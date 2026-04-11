@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'apps.rapports',
 ]
 
+# Middlewares optimisés pour performance
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -44,7 +45,6 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'autointel.urls'
@@ -72,11 +72,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'autointel.wsgi.application'
 
-# BASE DE DONNÉES — SQLite pour dev, PostgreSQL pour prod
+# BASE DE DONNÉES - PostgreSQL optimisé pour dev et prod
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME', default='autointel_db'),
+        'USER': config('DB_USER', default='postgres'),
+        'PASSWORD': config('DB_PASSWORD', default='postgres123'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
+        'OPTIONS': {
+            'connect_timeout': 10,
+            'application_name': 'autointel',
+        },
+        'CONN_MAX_AGE': 60,
     }
 }
 
@@ -96,9 +105,41 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = 'fr-fr'
-TIME_ZONE = 'Europe/Paris'
+TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
+
+# Performance optimizations
+CONN_MAX_AGE = 60
+
+# Désactiver les middlewares de sécurité en développement pour performance
+if DEBUG:
+    SECURE_BROWSER_XSS_FILTER = False
+    SECURE_CONTENT_TYPE_NOSNIFF = False
+    X_FRAME_OPTIONS = 'DENY'
+
+# Cache configuration (si Redis est disponible)
+try:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': 'redis://127.0.0.1:6379/1',
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            }
+        }
+    }
+except:
+    # Fallback sans cache
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
+    }
+
+# Session optimization
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
 
 # REST FRAMEWORK
 REST_FRAMEWORK = {
@@ -147,7 +188,6 @@ STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='whsec_placehold
 
 # PRODUCTION OVERRIDES
 if not DEBUG:
-    # Base de données PostgreSQL
     # Sécurité
     SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
@@ -155,9 +195,13 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-    # WhiteNoise pour les fichiers statiques
-    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    # WhiteNoise pour les fichiers statiques (si disponible)
+    try:
+        import whitenoise
+        MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+        STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    except ImportError:
+        pass  # WhiteNoise non disponible
 
     # CORS et hôtes autorisés
     allowed_hosts_env = [h.strip() for h in config('ALLOWED_HOSTS', default='').split(',') if h.strip()]
