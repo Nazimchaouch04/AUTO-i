@@ -1,6 +1,6 @@
 # AUTO-i
 
-Plateforme d'analyse du marché automobile avec estimation de prix par machine learning.
+Plateforme d'analyse du marché automobile avec estimation de prix.
 
 ## Installation
 

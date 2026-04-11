@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/subscriptions/', include('apps.subscriptions.urls')),
     path('api/gamification/', include('apps.gamification.urls')),
     path('api/ai/', include('apps.ai_assistant.urls')),
+    path('api/marketplace/', include('apps.marketplace.urls')),
     path('api/notifications/', include('apps.notifications.urls')),
     path('api/rapports/', include('apps.rapports.urls')),
 ]

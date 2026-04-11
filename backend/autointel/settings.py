@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'apps.gamification',
     'apps.scraping',
     'apps.ai_assistant',
+    'apps.marketplace',
     'apps.notifications',
     'apps.rapports',
 ]

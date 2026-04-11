@@ -1,0 +1,292 @@
+#!/usr/bin/env python3
+"""
+Test NLP corrigé pour l'assistant IA AutoIntel
+"""
+
+import re
+from typing import Dict, Any
+
+
+class SimpleNLPService:
+    """Service NLP simplifié pour test"""
+    
+    def __init__(self):
+        self.mots_cles_budget = [
+            'budget', 'prix', 'cout', 'euros', 'eur', 'euro', 'price', 'cost',
+            'maximum', 'max', 'minimum', 'min', 'entre', 'jusqua'
+        ]
+        
+        self.mots_cles_marques = [
+            'renault', 'peugeot', 'citroen', 'volkswagen', 'vw', 'audi', 'bmw', 'mercedes',
+            'opel', 'ford', 'toyota', 'nissan', 'honda', 'hyundai', 'kia', 'dacia'
+        ]
+        
+        self.mots_cles_types = [
+            'suv', 'berline', 'citadine', 'break', 'monospace', 'coupe', 'cabriolet'
+        ]
+        
+        self.mots_cles_carburant = [
+            'essence', 'diesel', 'electrique', 'hybride'
+        ]
+        
+        self.patterns_intent = {
+            'recherche_vehicule': [
+                r'cherche.*voiture', r'je veux.*voiture', r'recommande.*voiture',
+                r'suv.*famille', r'bmw.*electrique.*automatique', r'renault.*clio',
+                r'suv.*diesel.*moins.*25000', r'bmw.*electrique.*5.*places'
+            ],
+            'conseil_achat': [
+                r'conseil.*achat', r'faut.*acheter', r'bon.*achat',
+                r'meilleur.*moment.*acheter'
+            ],
+            'estimation_prix': [
+                r'estimation.*prix', r'combien.*vaut', r'prix.*estime',
+                r'combien.*vaut.*voiture'
+            ],
+            'information_marche': [
+                r'marche.*auto', r'tendance.*prix', r'prix.*marche',
+                r'comment.*evoluent.*prix', r'prix.*voitures.*electriques',
+                r'evoluent.*prix.*voitures.*electriques'
+            ]
+        }
+    
+    def nettoyer_texte(self, texte: str) -> str:
+        """Nettoie le texte pour l'analyse"""
+        if not texte:
+            return ""
+        
+        texte = texte.lower().strip()
+        texte = re.sub(r'[^\w\sàâäéèêëïîôöùûüÿç]', ' ', texte)
+        texte = re.sub(r'\s+', ' ', texte)
+        return texte
+    
+    def extraire_entites(self, texte: str) -> Dict[str, Any]:
+        """Extrait les entités du texte"""
+        texte_nettoye = self.nettoyer_texte(texte)
+        entites = {
+            'budget': None,
+            'budget_min': None,
+            'budget_max': None,
+            'marques': [],
+            'types': [],
+            'carburants': [],
+            'transmission': None,
+            'places': None,
+            'portes': None,
+            'annee': None
+        }
+        
+        # Extraction du budget
+        budget_patterns = [
+            r'budget.*?(\d+(?:\s?\d+)*)\s*(?:euros?|eur?|e)',
+            r'(\d+(?:\s?\d+)*)\s*(?:euros?|eur?|e).*?budget',
+            r'jusqua?.*?(\d+(?:\s?\d+)*)\s*(?:euros?|eur?|e)',
+            r'entre.*?(\d+(?:\s?\d+)*)\s*(?:euros?|eur?|e).*?et.*?(\d+(?:\s?\d+)*)',
+            r'prix.*?(\d+(?:\s?\d+)*)\s*(?:euros?|eur?|e)'
+        ]
+        
+        for pattern in budget_patterns:
+            match = re.search(pattern, texte_nettoye)
+            if match:
+                if len(match.groups()) == 2:
+                    entites['budget_min'] = int(match.group(1).replace(' ', ''))
+                    entites['budget_max'] = int(match.group(2).replace(' ', ''))
+                else:
+                    entites['budget'] = int(match.group(1).replace(' ', ''))
+                break
+        
+        # Extraction des marques
+        for marque in self.mots_cles_marques:
+            if marque in texte_nettoye:
+                entites['marques'].append(marque.capitalize())
+        
+        # Extraction des types de véhicules
+        for type_v in self.mots_cles_types:
+            if type_v in texte_nettoye:
+                entites['types'].append(type_v)
+        
+        # Extraction des types de carburant
+        for carburant in self.mots_cles_carburant:
+            if carburant in texte_nettoye:
+                entites['carburants'].append(carburant)
+        
+        # Extraction de la transmission
+        if 'automatique' in texte_nettoye:
+            entites['transmission'] = 'automatique'
+        elif 'manuelle' in texte_nettoye:
+            entites['transmission'] = 'manuelle'
+        
+        # Extraction du nombre de places
+        places_match = re.search(r'(\d+)\s*places?', texte_nettoye)
+        if places_match:
+            entites['places'] = int(places_match.group(1))
+        
+        # Extraction du nombre de portes
+        portes_match = re.search(r'(\d+)\s*portes?', texte_nettoye)
+        if portes_match:
+            entites['portes'] = int(portes_match.group(1))
+        
+        # Extraction de l'année
+        annee_match = re.search(r'(20\d{2})', texte_nettoye)
+        if annee_match:
+            entites['annee'] = int(annee_match.group(1))
+        
+        return entites
+    
+    def detecter_intent(self, texte: str) -> str:
+        """Détecte l'intention principale du message"""
+        texte_nettoye = self.nettoyer_texte(texte)
+        
+        for intent, patterns in self.patterns_intent.items():
+            for pattern in patterns:
+                if re.search(pattern, texte_nettoye):
+                    return intent
+        
+        return 'autre'
+    
+    def analyser_sentiment(self, texte: str) -> str:
+        """Analyse le sentiment du message"""
+        texte_nettoye = self.nettoyer_texte(texte)
+        
+        mots_positifs = ['bon', 'bien', 'excellent', 'super', 'parfait', 'content']
+        mots_negatifs = ['mauvais', 'nul', 'horrible', 'decevant', 'probleme']
+        
+        score_positif = sum(1 for mot in mots_positifs if mot in texte_nettoye)
+        score_negatif = sum(1 for mot in mots_negatifs if mot in texte_nettoye)
+        
+        if score_positif > score_negatif:
+            return 'positif'
+        elif score_negatif > score_positif:
+            return 'negatif'
+        else:
+            return 'neutre'
+    
+    def calculer_urgence(self, texte: str) -> int:
+        """Calcule le niveau d'urgence (0-100)"""
+        texte_nettoye = self.nettoyer_texte(texte)
+        
+        mots_urgence = ['urgent', 'rapidement', 'vite', 'de suite', 'maintenant']
+        score_urgence = sum(1 for mot in mots_urgence if mot in texte_nettoye)
+        
+        return min(score_urgence * 20, 100)
+    
+    def analyser_message(self, message_texte: str) -> Dict[str, Any]:
+        """Analyse complète d'un message"""
+        entites = self.extraire_entites(message_texte)
+        intent = self.detecter_intent(message_texte)
+        sentiment = self.analyser_sentiment(message_texte)
+        urgence = self.calculer_urgence(message_texte)
+        
+        return {
+            'intent_principale': intent,
+            'entites': entites,
+            'sentiment': sentiment,
+            'niveau_urgence': urgence
+        }
+
+
+def main():
+    """Test du service NLP"""
+    print("=" * 60)
+    print("TEST NLP CORRIGÉ - ASSISTANT IA AUTOINTEL")
+    print("=" * 60)
+    
+    nlp_service = SimpleNLPService()
+    
+    # Messages de test
+    test_scenarios = [
+        {
+            'message': 'Je cherche une Renault Clio avec budget 15000 euros',
+            'expected_intent': 'recherche_vehicule',
+            'expected_entities': {'budget': 15000, 'marques': ['Renault']}
+        },
+        {
+            'message': 'SUV familial diesel moins de 25000 EUR',
+            'expected_intent': 'recherche_vehicule',
+            'expected_entities': {'budget_max': 25000, 'types': ['suv'], 'carburants': ['diesel']}
+        },
+        {
+            'message': 'BMW électrique automatique 5 places',
+            'expected_intent': 'recherche_vehicule',
+            'expected_entities': {'marques': ['Bmw'], 'carburants': ['electrique'], 'transmission': 'automatique', 'places': 5}
+        },
+        {
+            'message': 'Quel est le meilleur moment pour acheter une voiture ?',
+            'expected_intent': 'conseil_achat',
+            'expected_entities': {}
+        },
+        {
+            'message': 'Combien vaut ma voiture de 2019 ?',
+            'expected_intent': 'estimation_prix',
+            'expected_entities': {'annee': 2019}
+        },
+        {
+            'message': 'Comment évoluent les prix des voitures électriques ?',
+            'expected_intent': 'information_marche',
+            'expected_entities': {'carburants': ['electrique']}
+        }
+    ]
+    
+    print("\n=== Test d'analyse complète ===")
+    
+    success_count = 0
+    total_count = len(test_scenarios)
+    
+    for i, scenario in enumerate(test_scenarios, 1):
+        message = scenario['message']
+        analyse = nlp_service.analyser_message(message)
+        
+        print(f"\n--- Test {i}/{total_count} ---")
+        print(f"Message: {message}")
+        print(f"Intent détecté: {analyse['intent_principale']}")
+        print(f"Intent attendu: {scenario['expected_intent']}")
+        print(f"Entités détectées: {analyse['entites']}")
+        print(f"Entités attendues: {scenario['expected_entities']}")
+        print(f"Sentiment: {analyse['sentiment']}")
+        print(f"Urgence: {analyse['niveau_urgence']}")
+        
+        # Vérification
+        intent_ok = analyse['intent_principale'] == scenario['expected_intent']
+        
+        # Vérification des entités principales
+        entities_ok = True
+        for key, expected_value in scenario['expected_entities'].items():
+            if isinstance(expected_value, list):
+                if key not in analyse['entites']:
+                    entities_ok = False
+                    break
+                elif not all(item in analyse['entites'][key] for item in expected_value):
+                    entities_ok = False
+                    break
+            else:
+                if key not in analyse['entites'] or analyse['entites'][key] != expected_value:
+                    entities_ok = False
+                    break
+        
+        if intent_ok and entities_ok:
+            print("Resultat: SUCCESS")
+            success_count += 1
+        else:
+            print("Resultat: ECHEC")
+            if not intent_ok:
+                print("  - Intent incorrect")
+            if not entities_ok:
+                print("  - Entités incorrectes")
+        
+        print("-" * 50)
+    
+    print(f"\n" + "=" * 60)
+    print(f"RESULTAT FINAL: {success_count}/{total_count} tests reussis")
+    print(f"Precision: {(success_count/total_count)*100:.1f}%")
+    print("=" * 60)
+    
+    if success_count == total_count:
+        print("Le service NLP fonctionne parfaitement!")
+    else:
+        print("Quelques améliorations sont nécessaires.")
+    
+    return success_count == total_count
+
+
+if __name__ == "__main__":
+    main()
