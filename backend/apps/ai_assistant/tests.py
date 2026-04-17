@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.annonces.models import Annonce, Vehicule
+from apps.annonces.models import Annonce
 from apps.subscriptions.models import Plan
 
 from .models import UserProfileAnalysis

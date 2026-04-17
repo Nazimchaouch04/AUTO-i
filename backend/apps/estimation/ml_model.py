@@ -85,11 +85,11 @@ class ModeleEstimationPrix:
             from apps.annonces.models import Annonce
             annonces = Annonce.objects.filter(
                 est_active=True, prix__gt=500, prix__lt=200000
-            ).values('vehicule__marque', 'annee', 'kilometrage',
+            ).values('marque__nom', 'annee', 'kilometrage',
                      'carburant', 'boite', 'puissance', 'pays', 'prix')
             df_reel = pd.DataFrame(list(annonces))
             if not df_reel.empty:
-                df_reel = df_reel.rename(columns={'vehicule__marque': 'marque'})
+                df_reel = df_reel.rename(columns={'marque__nom': 'marque'})
                 df_reel['puissance'] = df_reel['puissance'].fillna(100)
         except Exception:
             df_reel = pd.DataFrame()

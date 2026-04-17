@@ -151,7 +151,7 @@ class UserProfileAnalysisAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'user__email')
     ordering = ('-updated_at',)
     readonly_fields = ('created_at', 'updated_at')
-    # filter_horizontal = ('marques_preferees',)  # Commented out as field doesn't exist in current model
+    filter_horizontal = ('marques_preferrees',)  # ManyToMany field correct name
     
     fieldsets = (
         ('Utilisateur', {
@@ -163,7 +163,7 @@ class UserProfileAnalysisAdmin(admin.ModelAdmin):
             'classes': ('wide',),
         }),
         ('Préférences véhicule', {
-            'fields': ('types_vehicule', 'usage_principal'),
+            'fields': ('marques_preferrees', 'types_vehicule', 'usage_principal'),
             'classes': ('wide',),
         }),
         ('Caractéristiques', {
@@ -210,7 +210,7 @@ class UserProfileAnalysisAdmin(admin.ModelAdmin):
 class VehicleRecommendationAdmin(admin.ModelAdmin):
     list_display = ('user_display', 'vehicule_display', 'score_display', 'confidence_display', 'created_at')
     list_filter = ('score_total', 'confiance_prediction', 'created_at')
-    search_fields = ('user__username', 'vehicule__marque__nom', 'vehicule__modele')
+    search_fields = ('user__username', 'vehicule__marque', 'vehicule__modele')
     ordering = ('-score_total', '-created_at')
     readonly_fields = ('created_at',)
     
@@ -244,7 +244,7 @@ class VehicleRecommendationAdmin(admin.ModelAdmin):
     
     def vehicule_display(self, obj):
         return format_html('<strong style="color:#F0F0F5">{} {}</strong>', 
-                         obj.vehicule.marque.nom, obj.vehicule.modele)
+                         obj.vehicule.marque, obj.vehicule.modele)
     vehicule_display.short_description = 'Véhicule'
     
     def score_display(self, obj):

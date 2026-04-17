@@ -70,8 +70,8 @@ class RapportPDFService:
         # Récupère les annonces similaires pour comparaison
         from apps.annonces.models import Annonce
         similaires = Annonce.objects.filter(
-            vehicule__marque=annonce.vehicule.marque,
-            vehicule__modele=annonce.vehicule.modele,
+            marque=annonce.marque,
+            modele__iexact=annonce.modele,
             annee__range=(annonce.annee - 2, annonce.annee + 2),
             est_active=True
         ).exclude(id=annonce.id)[:10]

@@ -1,6 +1,6 @@
 from django.conf import settings
 from decouple import config
-from apps.annonces.models import Annonce, Vehicule
+from apps.annonces.models import Annonce
 from django.db.models import Avg, Count, Min, Max, Q
 import logging
 
@@ -32,7 +32,7 @@ def get_contexte_marche():
         
         top_marques = list(
             Annonce.objects.filter(est_active=True)
-            .values('vehicule__marque')
+            .values('marque__nom')
             .annotate(nb=Count('id'), prix_moyen=Avg('prix'))
             .order_by('-nb')[:8]
         )
@@ -53,8 +53,8 @@ def construire_system_prompt():
     stats, top_marques = get_contexte_marche()
     
     marques_str = ', '.join([
-        f"{m['vehicule__marque']} (moy. {int(m['prix_moyen'] or 0):,}€)"
-        for m in top_marques if m['vehicule__marque']
+        f"{m['marque__nom']} (moy. {int(m['prix_moyen'] or 0):,}€)"
+        for m in top_marques if m['marque__nom']
     ])
     
     return f"""Tu es AutoIntel Assistant, un expert en analyse du marché automobile

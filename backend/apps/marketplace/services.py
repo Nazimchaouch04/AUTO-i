@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from apps.annonces.models import Annonce, Vehicule
+from apps.annonces.models import Annonce
 
 from .models import (
     Listing,
@@ -40,102 +40,70 @@ class MarketplacePaymentService:
         )
 
     @classmethod
-    def create_payment(cls, order: MarketplaceOrder) -> MarketplacePayment:
-        amount = order.total_amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    def create_payment(cls, transaction: Transaction):
+        """Crée un paiement Stripe pour une transaction marketplace."""
+        amount = Decimal(transaction.total_amount).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
         if cls._should_use_stripe():
             stripe.api_key = settings.STRIPE_SECRET_KEY
             intent = stripe.PaymentIntent.create(
                 amount=int(amount * 100),
-                currency=order.currency.lower(),
+                currency='eur',
                 metadata={
-                    'order_reference': str(order.reference),
-                    'listing_id': order.listing_id,
-                    'buyer_id': order.buyer_id,
-                    'seller_id': order.seller_id,
+                    'transaction_id': str(transaction.id),
+                    'listing_id': transaction.listing_id,
+                    'buyer_id': transaction.buyer_id,
+                    'seller_id': transaction.seller_id,
                 },
                 automatic_payment_methods={'enabled': True},
             )
-            return MarketplacePayment.objects.create(
-                order=order,
-                provider=MarketplacePayment.Provider.STRIPE,
-                status=MarketplacePayment.Status.REQUIRES_ACTION,
-                amount=amount,
-                currency=order.currency,
-                provider_reference=intent.id,
-                client_secret=intent.client_secret or '',
-                provider_payload={'status': intent.status},
-            )
+            return {
+                'provider': 'stripe',
+                'client_secret': intent.client_secret,
+                'provider_reference': intent.id,
+            }
 
-        reference = f"mock_pi_{secrets.token_hex(8)}"
-        secret = f"mock_secret_{secrets.token_hex(12)}"
-        return MarketplacePayment.objects.create(
-            order=order,
-            provider=MarketplacePayment.Provider.MOCK,
-            status=MarketplacePayment.Status.REQUIRES_ACTION,
-            amount=amount,
-            currency=order.currency,
-            provider_reference=reference,
-            client_secret=secret,
-            provider_payload={'mode': 'mock'},
-        )
+        # Mode mock (développement)
+        return {
+            'provider': 'mock',
+            'client_secret': f"mock_secret_{secrets.token_hex(12)}",
+            'provider_reference': f"mock_pi_{secrets.token_hex(8)}",
+        }
 
     @classmethod
-    def confirm_payment(
-        cls,
-        payment: MarketplacePayment,
-        provider_reference: str | None = None,
-    ) -> MarketplacePayment:
-        if payment.status == MarketplacePayment.Status.SUCCEEDED:
-            return payment
-
-        if payment.provider == MarketplacePayment.Provider.STRIPE and cls._should_use_stripe():
+    def confirm_payment(cls, transaction: Transaction, provider_reference: str = None):
+        """Confirme un paiement (simplifié)."""
+        if cls._should_use_stripe() and provider_reference:
             stripe.api_key = settings.STRIPE_SECRET_KEY
-            intent_id = provider_reference or payment.provider_reference
-            intent = stripe.PaymentIntent.retrieve(intent_id)
+            intent = stripe.PaymentIntent.retrieve(provider_reference)
             if intent.status not in {'succeeded', 'requires_capture'}:
-                raise MarketplaceError("Le paiement n'est pas encore confirme par Stripe.")
-            payment.provider_payload = {'status': intent.status}
-
-        payment.status = MarketplacePayment.Status.SUCCEEDED
-        payment.confirmed_at = timezone.now()
-        payment.save(update_fields=['status', 'confirmed_at', 'provider_payload', 'updated_at'])
-        return payment
+                raise MarketplaceError("Le paiement n'est pas encore confirmé par Stripe.")
+        # Met à jour le statut de la transaction
+        transaction.status = Transaction.Status.PAID
+        transaction.save(update_fields=['status', 'updated_at'])
+        return transaction
 
     @classmethod
-    def refund_payment(cls, payment: MarketplacePayment) -> MarketplacePayment:
-        if payment.status == MarketplacePayment.Status.REFUNDED:
-            return payment
-
-        if payment.provider == MarketplacePayment.Provider.STRIPE and cls._should_use_stripe():
+    def refund_payment(cls, transaction: Transaction):
+        """Rembourse un paiement (simplifié)."""
+        if cls._should_use_stripe():
             stripe.api_key = settings.STRIPE_SECRET_KEY
-            stripe.Refund.create(payment_intent=payment.provider_reference)
-
-        payment.status = MarketplacePayment.Status.REFUNDED
-        payment.refunded_at = timezone.now()
-        payment.save(update_fields=['status', 'refunded_at', 'updated_at'])
-        return payment
+            # stripe.Refund.create(payment_intent=...)
+        transaction.status = Transaction.Status.PENDING  # ou annulé
+        transaction.save(update_fields=['status', 'updated_at'])
+        return transaction
 
 
 class MarketplaceService:
     @staticmethod
-    def _log_event(event_type, actor=None, listing=None, order=None, payload=None):
-        MarketplaceEvent.objects.create(
-            event_type=event_type,
-            actor=actor,
-            listing=listing,
-            order=order,
-            payload=payload or {},
-        )
-
-    @staticmethod
     def _ensure_verified_seller(user):
-        verification = SellerVerification.objects.filter(user=user).first()
-        if not verification or verification.status != SellerVerification.Status.APPROVED:
+        """Vérifie que le vendeur a un profil vérifié."""
+        profile = SellerProfile.objects.filter(user=user).first()
+        if not profile or not profile.is_verified:
             raise MarketplaceError(
-                "La verification d'identite du vendeur doit etre approuvee avant publication."
+                "Le vendeur doit avoir un profil vérifié avant publication."
             )
-        return verification
+        return profile
 
     @staticmethod
     def submit_verification(user, payload):

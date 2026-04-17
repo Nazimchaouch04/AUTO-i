@@ -1,0 +1,694 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-04-17",
+  "__export_source": "AutoIntel Backend API",
+  "resources": [
+    {
+      "_id": "req_root",
+      "parentId": "fld_root",
+      "_type": "request",
+      "name": "API Root",
+      "url": "http://127.0.0.1:8000/",
+      "method": "GET",
+      "headers": []
+    },
+    {
+      "_id": "req_health",
+      "parentId": "fld_health",
+      "_type": "request", 
+      "name": "Health Check",
+      "url": "http://127.0.0.1:8000/api/health/",
+      "method": "GET",
+      "headers": []
+    },
+    {
+      "_id": "fld_root",
+      "_type": "request_group",
+      "name": "AutoIntel Backend API",
+      "description": "Backend Django REST API - Base URL: http://127.0.0.1:8000"
+    },
+    {
+      "_id": "fld_health",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "00 - Health & Root"
+    },
+    {
+      "_id": "fld_auth",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "01 - Authentication"
+    },
+    {
+      "_id": "req_auth_register",
+      "parentId": "fld_auth",
+      "_type": "request",
+      "name": "Register",
+      "url": "http://127.0.0.1:8000/api/auth/register/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"testpass123\",\n  \"password2\": \"testpass123\",\n  \"first_name\": \"Test\",\n  \"last_name\": \"User\"\n}"
+      },
+      "headers": [{"name": "Content-Type", "value": "application/json"}]
+    },
+    {
+      "_id": "req_auth_login",
+      "parentId": "fld_auth",
+      "_type": "request",
+      "name": "Login",
+      "url": "http://127.0.0.1:8000/api/auth/login/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"testuser\",\n  \"password\": \"testpass123\"\n}"
+      },
+      "headers": [{"name": "Content-Type", "value": "application/json"}]
+    },
+    {
+      "_id": "req_auth_me",
+      "parentId": "fld_auth",
+      "_type": "request",
+      "name": "Get Profile (Me)",
+      "url": "http://127.0.0.1:8000/api/auth/me/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_auth_me_patch",
+      "parentId": "fld_auth",
+      "_type": "request",
+      "name": "Update Profile",
+      "url": "http://127.0.0.1:8000/api/auth/me/",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"country\": \"DZ\",\n  \"phone\": \"+213555123456\"\n}"
+      },
+      "headers": [
+        {"name": "Content-Type", "value": "application/json"},
+        {"name": "Authorization", "value": "Bearer {{access_token}}"}
+      ]
+    },
+    {
+      "_id": "req_auth_change_password",
+      "parentId": "fld_auth",
+      "_type": "request",
+      "name": "Change Password",
+      "url": "http://127.0.0.1:8000/api/auth/change-password/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"old_password\": \"testpass123\",\n  \"new_password\": \"newpass123\",\n  \"new_password2\": \"newpass123\"\n}"
+      },
+      "headers": [
+        {"name": "Content-Type", "value": "application/json"},
+        {"name": "Authorization", "value": "Bearer {{access_token}}"}
+      ]
+    },
+    {
+      "_id": "req_auth_refresh",
+      "parentId": "fld_auth",
+      "_type": "request",
+      "name": "Refresh Token",
+      "url": "http://127.0.0.1:8000/api/auth/refresh/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+      },
+      "headers": [{"name": "Content-Type", "value": "application/json"}]
+    },
+    {
+      "_id": "req_auth_verify",
+      "parentId": "fld_auth",
+      "_type": "request",
+      "name": "Verify Token",
+      "url": "http://127.0.0.1:8000/api/auth/verify/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"token\": \"{{access_token}}\"\n}"
+      },
+      "headers": [{"name": "Content-Type", "value": "application/json"}]
+    },
+    {
+      "_id": "fld_annonces",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "02 - Annonces"
+    },
+    {
+      "_id": "req_annonces_list",
+      "parentId": "fld_annonces",
+      "_type": "request",
+      "name": "List Annonces",
+      "url": "http://127.0.0.1:8000/api/annonces/annonces/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_annonces_list_paginated",
+      "parentId": "fld_annonces",
+      "_type": "request",
+      "name": "List Annonces (Paginated)",
+      "url": "http://127.0.0.1:8000/api/annonces/annonces/?page=1&page_size=10&ordering=-date_publication",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_annonces_search",
+      "parentId": "fld_annonces",
+      "_type": "request",
+      "name": "Search Annonces",
+      "url": "http://127.0.0.1:8000/api/annonces/annonces/?search=bmw&marque__nom=Peugeot&prix_max=50000",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_annonces_filter",
+      "parentId": "fld_annonces",
+      "_type": "request",
+      "name": "Filter Annonces",
+      "url": "http://127.0.0.1:8000/api/annonces/annonces/?carburant=essence&boite=manuelle&annee_min=2020",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_annonces_detail",
+      "parentId": "fld_annonces",
+      "_type": "request",
+      "name": "Get Annonce Detail",
+      "url": "http://127.0.0.1:8000/api/annonces/annonces/1/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_annonces_bonnes_affaires",
+      "parentId": "fld_annonces",
+      "_type": "request",
+      "name": "Bonnes Affaires",
+      "url": "http://127.0.0.1:8000/api/annonces/annonces/bonnes_affaires/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_annonces_stats_marques",
+      "parentId": "fld_annonces",
+      "_type": "request",
+      "name": "Stats Marques",
+      "url": "http://127.0.0.1:8000/api/annonces/annonces/stats_marques/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_annonces_export_csv",
+      "parentId": "fld_annonces",
+      "_type": "request",
+      "name": "Export CSV",
+      "url": "http://127.0.0.1:8000/api/annonces/annonces/export_csv/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_marques_list",
+      "parentId": "fld_annonces",
+      "_type": "request",
+      "name": "List Marques",
+      "url": "http://127.0.0.1:8000/api/annonces/marques/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "fld_favoris",
+      "parentId": "fld_annonces",
+      "_type": "request_group",
+      "name": "Favoris"
+    },
+    {
+      "_id": "req_favoris_list",
+      "parentId": "fld_favoris",
+      "_type": "request",
+      "name": "List Favoris",
+      "url": "http://127.0.0.1:8000/api/annonces/favoris/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_favoris_create",
+      "parentId": "fld_favoris",
+      "_type": "request",
+      "name": "Add Favori",
+      "url": "http://127.0.0.1:8000/api/annonces/favoris/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"annonce\": 1\n}"
+      },
+      "headers": [
+        {"name": "Content-Type", "value": "application/json"},
+        {"name": "Authorization", "value": "Bearer {{access_token}}"}
+      ]
+    },
+    {
+      "_id": "fld_estimation",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "03 - Estimation Prix"
+    },
+    {
+      "_id": "req_estimation_create",
+      "parentId": "fld_estimation",
+      "_type": "request",
+      "name": "Create Estimation",
+      "url": "http://127.0.0.1:8000/api/estimation/estimations/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"marque\": \"Peugeot\",\n  \"modele\": \"208\",\n  \"annee\": 2020,\n  \"kilometrage\": 50000,\n  \"carburant\": \"essence\",\n  \"boite\": \"manuelle\",\n  \"puissance\": 100,\n  \"pays\": \"DZ\"\n}"
+      },
+      "headers": [
+        {"name": "Content-Type", "value": "application/json"},
+        {"name": "Authorization", "value": "Bearer {{access_token}}"}
+      ]
+    },
+    {
+      "_id": "req_estimation_history",
+      "parentId": "fld_estimation",
+      "_type": "request",
+      "name": "History",
+      "url": "http://127.0.0.1:8000/api/estimation/estimations/history/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_estimation_export",
+      "parentId": "fld_estimation",
+      "_type": "request",
+      "name": "Export CSV",
+      "url": "http://127.0.0.1:8000/api/estimation/estimations/export_mes_estimations/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "fld_dashboard",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "04 - Dashboard"
+    },
+    {
+      "_id": "req_dashboard_kpis",
+      "parentId": "fld_dashboard",
+      "_type": "request",
+      "name": "KPIs",
+      "url": "http://127.0.0.1:8000/api/dashboard/dashboard/kpis/?period=30j",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_dashboard_charts",
+      "parentId": "fld_dashboard",
+      "_type": "request",
+      "name": "Charts",
+      "url": "http://127.0.0.1:8000/api/dashboard/dashboard/charts/?period=30j",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_dashboard_summary",
+      "parentId": "fld_dashboard",
+      "_type": "request",
+      "name": "Summary",
+      "url": "http://127.0.0.1:8000/api/dashboard/dashboard/summary/?period=30j",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "fld_subscriptions",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "05 - Subscriptions"
+    },
+    {
+      "_id": "req_subscriptions_plans",
+      "parentId": "fld_subscriptions",
+      "_type": "request",
+      "name": "Plans",
+      "url": "http://127.0.0.1:8000/api/subscriptions/plans/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_subscriptions_me",
+      "parentId": "fld_subscriptions",
+      "_type": "request",
+      "name": "My Subscription",
+      "url": "http://127.0.0.1:8000/api/subscriptions/me/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_subscriptions_checkout",
+      "parentId": "fld_subscriptions",
+      "_type": "request",
+      "name": "Checkout",
+      "url": "http://127.0.0.1:8000/api/subscriptions/checkout/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"plan_id\": 2,\n  \"success_url\": \"http://localhost:3000/success\",\n  \"cancel_url\": \"http://localhost:3000/cancel\"\n}"
+      },
+      "headers": [
+        {"name": "Content-Type", "value": "application/json"},
+        {"name": "Authorization", "value": "Bearer {{access_token}}"}
+      ]
+    },
+    {
+      "_id": "fld_gamification",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "06 - Gamification"
+    },
+    {
+      "_id": "req_gamification_profil",
+      "parentId": "fld_gamification",
+      "_type": "request",
+      "name": "Profil Joueur",
+      "url": "http://127.0.0.1:8000/api/gamification/profil/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_gamification_defis",
+      "parentId": "fld_gamification",
+      "_type": "request",
+      "name": "Défis",
+      "url": "http://127.0.0.1:8000/api/gamification/defis/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_gamification_boutique",
+      "parentId": "fld_gamification",
+      "_type": "request",
+      "name": "Boutique",
+      "url": "http://127.0.0.1:8000/api/gamification/boutique/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_gamification_achat",
+      "parentId": "fld_gamification",
+      "_type": "request",
+      "name": "Achat Item",
+      "url": "http://127.0.0.1:8000/api/gamification/boutique/1/acheter/",
+      "method": "POST",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_gamification_transactions",
+      "parentId": "fld_gamification",
+      "_type": "request",
+      "name": "Transactions",
+      "url": "http://127.0.0.1:8000/api/gamification/transactions/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_gamification_classement",
+      "parentId": "fld_gamification",
+      "_type": "request",
+      "name": "Classement",
+      "url": "http://127.0.0.1:8000/api/gamification/classement/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "fld_alertes",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "07 - Alertes"
+    },
+    {
+      "_id": "req_alertes_list",
+      "parentId": "fld_alertes",
+      "_type": "request",
+      "name": "List Alertes",
+      "url": "http://127.0.0.1:8000/api/alertes/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_alertes_create",
+      "parentId": "fld_alertes",
+      "_type": "request",
+      "name": "Create Alerte",
+      "url": "http://127.0.0.1:8000/api/alertes/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"marque\": \"Peugeot\",\n  \"modele\": \"208\",\n  \"prix_max\": 50000,\n  \"notification_email\": true\n}"
+      },
+      "headers": [
+        {"name": "Content-Type", "value": "application/json"},
+        {"name": "Authorization", "value": "Bearer {{access_token}}"}
+      ]
+    },
+    {
+      "_id": "fld_ai",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "08 - AI Assistant"
+    },
+    {
+      "_id": "req_ai_conversations",
+      "parentId": "fld_ai",
+      "_type": "request",
+      "name": "List Conversations",
+      "url": "http://127.0.0.1:8000/api/ai/conversations/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_ai_conversation_create",
+      "parentId": "fld_ai",
+      "_type": "request",
+      "name": "Create Conversation",
+      "url": "http://127.0.0.1:8000/api/ai/conversations/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"title\": \"Aide achat voiture\"\n}"
+      },
+      "headers": [
+        {"name": "Content-Type", "value": "application/json"},
+        {"name": "Authorization", "value": "Bearer {{access_token}}"}
+      ]
+    },
+    {
+      "_id": "req_ai_message",
+      "parentId": "fld_ai",
+      "_type": "request",
+      "name": "Send Message",
+      "url": "http://127.0.0.1:8000/api/ai/conversations/1/envoyer_message/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"content\": \"Quelle est la meilleure voiture pour 50000 DA ?\"\n}"
+      },
+      "headers": [
+        {"name": "Content-Type", "value": "application/json"},
+        {"name": "Authorization", "value": "Bearer {{access_token}}"}
+      ]
+    },
+    {
+      "_id": "req_ai_recommandations",
+      "parentId": "fld_ai",
+      "_type": "request",
+      "name": "Recommandations",
+      "url": "http://127.0.0.1:8000/api/ai/recommandations/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "fld_marketplace",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "09 - Marketplace"
+    },
+    {
+      "_id": "req_marketplace_root",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "Root",
+      "url": "http://127.0.0.1:8000/api/marketplace/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_marketplace_listings",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "Listings",
+      "url": "http://127.0.0.1:8000/api/marketplace/listings/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_marketplace_listings_create",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "Create Listing",
+      "url": "http://127.0.0.1:8000/api/marketplace/listings/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"title\": \"Peugeot 208 2020\",\n  \"description\": \"Excellent état\",\n  \"brand\": \"Peugeot\",\n  \"model\": \"208\",\n  \"year\": 2020,\n  \"price\": 45000,\n  \"condition\": \"used\"\n}"
+      },
+      "headers": [
+        {"name": "Content-Type", "value": "application/json"},
+        {"name": "Authorization", "value": "Bearer {{access_token}}"}
+      ]
+    },
+    {
+      "_id": "req_marketplace_transactions",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "Transactions",
+      "url": "http://127.0.0.1:8000/api/marketplace/transactions/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_marketplace_favorites",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "Favorites",
+      "url": "http://127.0.0.1:8000/api/marketplace/favorites/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_marketplace_reviews",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "Reviews",
+      "url": "http://127.0.0.1:8000/api/marketplace/reviews/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_marketplace_messages",
+      "parentId": "fld_marketplace",
+      "_type": "request",
+      "name": "Messages",
+      "url": "http://127.0.0.1:8000/api/marketplace/messages/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "fld_notifications",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "10 - Notifications"
+    },
+    {
+      "_id": "req_notifications_list",
+      "parentId": "fld_notifications",
+      "_type": "request",
+      "name": "List",
+      "url": "http://127.0.0.1:8000/api/notifications/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_notifications_unread",
+      "parentId": "fld_notifications",
+      "_type": "request",
+      "name": "Unread Count",
+      "url": "http://127.0.0.1:8000/api/notifications/unread_count/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_notifications_mark_read",
+      "parentId": "fld_notifications",
+      "_type": "request",
+      "name": "Mark All Read",
+      "url": "http://127.0.0.1:8000/api/notifications/mark_all_read/",
+      "method": "POST",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "fld_rapports",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "11 - Rapports"
+    },
+    {
+      "_id": "req_rapports_list",
+      "parentId": "fld_rapports",
+      "_type": "request",
+      "name": "List Rapports",
+      "url": "http://127.0.0.1:8000/api/rapports/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_rapports_create",
+      "parentId": "fld_rapports",
+      "_type": "request",
+      "name": "Create Rapport",
+      "url": "http://127.0.0.1:8000/api/rapports/",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"type_rapport\": \"complet\",\n  \"annonce_principale_id\": 1\n}"
+      },
+      "headers": [
+        {"name": "Content-Type", "value": "application/json"},
+        {"name": "Authorization", "value": "Bearer {{access_token}}"}
+      ]
+    },
+    {
+      "_id": "fld_vehicules",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "12 - Vehicules Library"
+    },
+    {
+      "_id": "req_vehicules_marques",
+      "parentId": "fld_vehicules",
+      "_type": "request",
+      "name": "Marques",
+      "url": "http://127.0.0.1:8000/api/vehicules/marques/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "req_vehicules_modeles",
+      "parentId": "fld_vehicules",
+      "_type": "request",
+      "name": "Modeles",
+      "url": "http://127.0.0.1:8000/api/vehicules/modeles/",
+      "method": "GET",
+      "headers": [{"name": "Authorization", "value": "Bearer {{access_token}}"}]
+    },
+    {
+      "_id": "fld_admin",
+      "parentId": "fld_root",
+      "_type": "request_group",
+      "name": "99 - Admin (Browser)"
+    },
+    {
+      "_id": "req_admin",
+      "parentId": "fld_admin",
+      "_type": "request",
+      "name": "Django Admin",
+      "url": "http://127.0.0.1:8000/admin/",
+      "method": "GET",
+      "headers": []
+    }
+  ]
+}

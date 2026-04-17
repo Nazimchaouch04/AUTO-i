@@ -109,7 +109,7 @@ class DashboardViewSet(viewsets.ViewSet):
         prix_par_marque = []
         marques_data = (
             Annonce.objects.filter(date_publication__gte=start_date)
-            .values('vehicule__marque')
+            .values('marque__nom')
             .annotate(
                 count=Count('id'),
                 prix_avg=Avg('prix')
@@ -119,7 +119,7 @@ class DashboardViewSet(viewsets.ViewSet):
 
         for item in marques_data:
             prix_par_marque.append({
-                'marque': item['vehicule__marque'] or 'Autre',
+                'marque': item['marque__nom'] or 'Autre',
                 'prix': round(item['prix_avg'] or 0, 0),
                 'annonces': item['count']
             })
@@ -323,9 +323,9 @@ class DashboardViewSet(viewsets.ViewSet):
         # Prix par marque (top 10)
         prix_par_marque = list(
             Annonce.objects.filter(date_publication__gte=start_date)
-            .values('vehicule__marque')
+            .values('marque__nom')
             .annotate(
-                marque=models.F('vehicule__marque'),
+                marque=models.F('marque__nom'),
                 count=Count('id'),
                 prix_moyen=Avg('prix')
             )
@@ -357,7 +357,7 @@ class DashboardViewSet(viewsets.ViewSet):
                 est_bonne_affaire=True
             ).values(
                 'id', 'prix', 'prix_estime', 'ecart_prix',
-                'vehicule__marque', 'vehicule__modele', 'annee'
+                'marque__nom', 'modele', 'annee'
             ).order_by('-date_publication')[:6]
         )
 

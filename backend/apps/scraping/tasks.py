@@ -1,6 +1,6 @@
 from celery import shared_task
 from django.db import transaction
-from apps.annonces.models import Annonce, Vehicule
+from apps.annonces.models import Annonce
 from .scrapers.ouedkniss import OuedknissScraper
 
 @shared_task(name='scraping.scraper_annonces')

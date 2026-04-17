@@ -92,7 +92,7 @@ class EstimationViewSet(viewsets.ViewSet):
             from apps.annonces.models import Annonce
             qs_ex = Annonce.objects.filter(
                 est_active=True,
-                vehicule__modele__iexact=data['modele']
+                modele__iexact=data['modele']
             ).order_by('?')[:3]
             for a in qs_ex:
                 exemples.append({
@@ -131,9 +131,9 @@ class EstimationViewSet(viewsets.ViewSet):
                 pass
             
             try:
-                profil = request.user.profil
-                profil.add_coins(50)
-                profil.add_xp(100)
+                profile = request.user.profile
+                profile.add_coins(50)
+                profile.add_xp(100)
             except Exception:
                 pass
 

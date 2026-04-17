@@ -9,23 +9,37 @@ from apps.subscriptions.models import Abonnement, Plan
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     """Crée automatiquement un profil utilisateur quand un User est créé"""
-    if created:
-        UserProfile.objects.create(user=instance)
-        
-        # Création du profil gamification (donne automatiquement 100 AC de base via le modèle)
+    if not created:
+        return
+
+    # 1. UserProfile
+    try:
+        UserProfile.objects.get_or_create(user=instance)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger('autointel')
+        logger.error(f"UserProfile creation failed for {instance.username}: {e}")
+
+    # 2. ProfilJoueur (gamification)
+    try:
         ProfilJoueur.objects.get_or_create(user=instance)
-        
-        # Création de l'abonnement gratuit par défaut
-        try:
-            free_plan, _ = Plan.objects.get_or_create(
-                nom='free',
-                defaults={
-                    'prix_mensuel': 0,
-                    'estimations_par_mois': 5,
-                    'alertes_max': 2
-                }
-            )
-            Abonnement.objects.get_or_create(user=instance, plan=free_plan)
-        except Exception as e:
-            # Sécurité en cas d'erreur DB
-            pass
+    except Exception as e:
+        import logging
+        logger = logging.getLogger('autointel')
+        logger.error(f"ProfilJoueur creation failed for {instance.username}: {e}")
+
+    # 3. Abonnement Free
+    try:
+        free_plan, _ = Plan.objects.get_or_create(
+            nom='free',
+            defaults={
+                'prix_mensuel': 0,
+                'estimations_par_mois': 5,
+                'alertes_max': 2
+            }
+        )
+        Abonnement.objects.get_or_create(user=instance, plan=free_plan)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger('autointel')
+        logger.error(f"Subscription creation failed for {instance.username}: {e}")

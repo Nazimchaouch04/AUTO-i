@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework.test import APIClient, APITestCase
 from rest_framework import status
 from decimal import Decimal
-from .models import Annonce, Vehicule, Favori
+from .models import Annonce, Favori
 from apps.subscriptions.models import Plan
 
 class AnnonceAPITest(TestCase):
@@ -90,16 +90,12 @@ class SecurityTest(APITestCase):
             username='testuser',
             password='testpass123'
         )
-        self.vehicule = Vehicule.objects.create(
-            marque="BMW",
-            modele="Série 3"
-        )
     
     def test_sql_injection_protection(self):
         """Test la protection contre l'injection SQL"""
         url = '/api/annonces/'
         malicious_input = "'; DROP TABLE annonces_annonce; --"
-        response = self.client.get(url, {'vehicule__marque': malicious_input})
+        response = self.client.get(url, {'marque__nom': malicious_input})
         # La réponse doit être 200 OK et non une erreur de base de données
         self.assertEqual(response.status_code, status.HTTP_200_OK)
     
