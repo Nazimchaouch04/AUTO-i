@@ -2,24 +2,24 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
-    MarketplaceListingViewSet,
-    MarketplaceOrderViewSet,
+    ListingViewSet,
+    TransactionViewSet,
+    SellerProfileViewSet,
+    ReviewViewSet,
+    FavoriteViewSet,
+    MessageViewSet,
     MarketplaceRootView,
-    SellerVerificationReviewView,
-    SellerVerificationView,
 )
 
 router = DefaultRouter()
-router.register(r'listings', MarketplaceListingViewSet, basename='marketplace-listing')
-router.register(r'orders', MarketplaceOrderViewSet, basename='marketplace-order')
+router.register(r'listings', ListingViewSet, basename='marketplace-listing')
+router.register(r'transactions', TransactionViewSet, basename='marketplace-transaction')
+router.register(r'profile', SellerProfileViewSet, basename='marketplace-profile')
+router.register(r'reviews', ReviewViewSet, basename='marketplace-review')
+router.register(r'favorites', FavoriteViewSet, basename='marketplace-favorite')
+router.register(r'messages', MessageViewSet, basename='marketplace-message')
 
 urlpatterns = [
     path('', MarketplaceRootView.as_view(), name='marketplace-root'),
-    path('verification/', SellerVerificationView.as_view(), name='seller-verification'),
-    path(
-        'verification/<int:verification_id>/review/',
-        SellerVerificationReviewView.as_view(),
-        name='seller-verification-review',
-    ),
     path('', include(router.urls)),
 ]

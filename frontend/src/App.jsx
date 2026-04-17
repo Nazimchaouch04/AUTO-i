@@ -16,6 +16,7 @@ const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 // Core pages
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const AnnoncesPage = lazy(() => import('./pages/AnnoncesPage'));
+const MarketplacePage = lazy(() => import('./pages/MarketplacePage'));
 const EstimationPage = lazy(() => import('./pages/EstimationPage'));
 const AlertesPage = lazy(() => import('./pages/AlertesPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
@@ -136,6 +137,7 @@ export default function App() {
             {/* Core */}
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/annonces" element={<AnnoncesPage />} />
+            <Route path="/marketplace" element={<MarketplacePage />} />
             <Route path="/estimation" element={<EstimationPage />} />
             <Route path="/alertes" element={<AlertesPage />} />
             <Route path="/profil" element={<ProfilePage />} />

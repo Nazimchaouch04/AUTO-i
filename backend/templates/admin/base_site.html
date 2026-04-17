@@ -1,0 +1,43 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}
+  {% if subtitle %}{{ subtitle }} — {% endif %}
+  {% if title %}{{ title }} — {% endif %}
+  ⚡ AutoIntel Admin
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+  <a href="{% url 'admin:index' %}">AutoIntel</a>
+  <span style="font-size:11px;font-weight:400;color:#55556A;margin-left:8px;letter-spacing:0.5px;">
+    Back-office
+  </span>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'admin/css/custom_admin.css' %}">
+<style>
+html { color-scheme: dark; }
+body.dark-mode, html { background: #0D0D14 !important; }
+#header { background: #13131E !important; }
+</style>
+{% endblock %}
+
+{% block footer %}
+<div id="footer" style="
+  background: #13131E;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  color: #55556A;
+  font-size: 11px;
+  text-align: center;
+  padding: 12px;
+  font-family: 'Inter', sans-serif;
+">
+  ⚡ AutoIntel Admin v1.0 — Intelligence automobile pour le Maghreb
+</div>
+{% endblock %}

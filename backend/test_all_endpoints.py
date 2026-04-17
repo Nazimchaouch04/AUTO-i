@@ -7,16 +7,38 @@ import json
 
 # Configuration
 BASE_URL = "http://localhost:8000"
-TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc1ODU0MjQ2LCJpYXQiOjE3NzU4NTA2NDYsImp0aSI6IjIxMTI4MjZkZGU3YzQ1MTg4NDcwMjE2ZTAwOTk5ZjRjIiwidXNlcl9pZCI6IjMifQ.0iMTfq76pHZt4ZupE2LhwT1pSG2BPv2icgv_oip2VeQ"
+USERNAME = "test"
+PASSWORD = "newtest123"
 
-headers = {
-    "Authorization": f"Bearer {TOKEN}",
-    "Content-Type": "application/json"
+BASE_HEADERS = {
+    "Content-Type": "application/json",
 }
 
-def test_endpoint(name, url, method="GET", data=None):
+
+def get_access_token():
+    """Récupère un token JWT via l'endpoint login."""
+    payload = {"username": USERNAME, "password": PASSWORD}
+    response = requests.post(
+        f"{BASE_URL}/api/auth/login/", headers=BASE_HEADERS, json=payload
+    )
+    if response.status_code != 200:
+        return None, response
+    data = response.json()
+    return data.get("access"), response
+
+
+def build_auth_headers(token):
+    headers = dict(BASE_HEADERS)
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
+
+
+def test_endpoint(name, url, method="GET", data=None, headers=None):
     """Test un endpoint spécifique"""
     try:
+        if headers is None:
+            headers = BASE_HEADERS
         if method == "GET":
             response = requests.get(f"{BASE_URL}{url}", headers=headers)
         elif method == "POST":
@@ -24,7 +46,7 @@ def test_endpoint(name, url, method="GET", data=None):
         else:
             return False, "Method not supported"
         
-        success = response.status_code == 200
+        success = response.status_code in (200, 201)
         message = f"Status: {response.status_code}"
         if success:
             try:
@@ -46,27 +68,43 @@ def test_endpoint(name, url, method="GET", data=None):
 def main():
     """Test tous les endpoints principaux"""
     print("=== Test de tous les endpoints API AutoIntel ===\n")
+
+    token, login_response = get_access_token()
+    if not token:
+        print(
+            "Login JWT               | FAIL  | "
+            f"Status: {login_response.status_code} | {login_response.text}"
+        )
+        print("\nImpossible de continuer les tests authentifiés sans token.")
+        return
+    print("Login JWT               | OK    | Status: 200")
+
+    auth_headers = build_auth_headers(token)
     
     endpoints = [
-        ("Health Check", "/api/health/"),
-        ("Gamification Root", "/api/gamification/"),
-        ("Gamification Profil", "/api/gamification/profil/"),
-        ("Gamification Leaderboard", "/api/gamification/leaderboard/"),
-        ("Subscriptions Root", "/api/subscriptions/"),
-        ("Subscriptions Plans", "/api/subscriptions/plans/"),
-        ("AI Assistant Root", "/api/ai/"),
-        ("Notifications Root", "/api/notifications/"),
-        ("Annonces Root", "/api/annonces/"),
-        ("Véhicules Root", "/api/vehicules/"),
-        ("Alertes", "/api/alertes/"),
-        ("Dashboard", "/api/dashboard/"),
-        ("Rapports", "/api/rapports/"),
+        # Public
+        ("Health Check", "/api/health/", False),
+
+        # Authenticated
+        ("Gamification Root", "/api/gamification/", True),
+        ("Gamification Profil", "/api/gamification/profil/", True),
+        ("Gamification Leaderboard", "/api/gamification/leaderboard/", True),
+        ("Subscriptions Root", "/api/subscriptions/", True),
+        ("Subscriptions Plans", "/api/subscriptions/plans/", True),
+        ("AI Assistant Root", "/api/ai/", True),
+        ("Notifications Root", "/api/notifications/", True),
+        ("Annonces Root", "/api/annonces/", True),
+        ("Véhicules Root", "/api/vehicules/", True),
+        ("Alertes", "/api/alertes/", True),
+        ("Dashboard", "/api/dashboard/", True),
+        ("Rapports", "/api/rapports/", True),
     ]
     
     results = []
     
-    for name, url in endpoints:
-        success, message = test_endpoint(name, url)
+    for name, url, requires_auth in endpoints:
+        headers = auth_headers if requires_auth else BASE_HEADERS
+        success, message = test_endpoint(name, url, headers=headers)
         status = "OK" if success else "FAIL"
         results.append((name, status, message))
         print(f"{name:25} | {status:5} | {message}")

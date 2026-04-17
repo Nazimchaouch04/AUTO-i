@@ -1,0 +1,205 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block content %}
+{% load i18n %}
+
+<div style="
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 0 0 24px;
+">
+
+  <div style="
+    background: #13131E;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-top: 3px solid #6C63FF;
+    border-radius: 12px;
+    padding: 16px 18px;
+  ">
+    <div style="font-size:10px;color:#8B8BA0;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;">
+      Annonces actives
+    </div>
+    <div style="font-size:26px;font-weight:700;color:#6C63FF;" id="stat-annonces">
+      110
+    </div>
+    <div style="font-size:11px;color:#55556A;margin-top:4px;">
+      +50 ce mois
+    </div>
+  </div>
+
+  <div style="
+    background: #13131E;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-top: 3px solid #00D4AA;
+    border-radius: 12px;
+    padding: 16px 18px;
+  ">
+    <div style="font-size:10px;color:#8B8BA0;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;">
+      Bonnes affaires
+    </div>
+    <div style="font-size:26px;font-weight:700;color:#00D4AA;">
+      25
+    </div>
+    <div style="font-size:11px;color:#55556A;margin-top:4px;">
+      Score ≥ 40 pts
+    </div>
+  </div>
+
+  <div style="
+    background: #13131E;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-top: 3px solid #F59E0B;
+    border-radius: 12px;
+    padding: 16px 18px;
+  ">
+    <div style="font-size:10px;color:#8B8BA0;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;">
+      Abonnés actifs
+    </div>
+    <div style="font-size:26px;font-weight:700;color:#F59E0B;">
+      8
+    </div>
+    <div style="font-size:11px;color:#55556A;margin-top:4px;">
+      72% conversion
+    </div>
+  </div>
+
+  <div style="
+    background: #13131E;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-top: 3px solid #22C55E;
+    border-radius: 12px;
+    padding: 16px 18px;
+  ">
+    <div style="font-size:10px;color:#8B8BA0;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;">
+      MRR mensuel
+    </div>
+    <div style="font-size:26px;font-weight:700;color:#22C55E;">
+      4,500 DA
+    </div>
+    <div style="font-size:11px;color:#55556A;margin-top:4px;">
+      31$
+    </div>
+  </div>
+
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 280px; gap: 20px;">
+
+  <div>
+    {{ block.super }}
+  </div>
+
+  <div>
+    <div style="
+      background: #13131E;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    ">
+      <div style="
+        background: #1C1C2E;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+        padding: 10px 14px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #8B8BA0;
+      ">
+        ⚡ Accès rapides
+      </div>
+
+      {% for link in quick_links %}
+      <a href="{{ link.url }}" style="
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        text-decoration: none;
+        color: #F0F0F5;
+        font-size: 12.5px;
+        transition: background 120ms;
+      " onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+         onmouseout="this.style.background='transparent'">
+        <span style="font-size:14px;">{{ link.icon }}</span>
+        {{ link.label }}
+      </a>
+      {% empty %}
+      <a href="/admin/annonces/annonce/?est_bonne_affaire__exact=1" style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;color:#F0F0F5;font-size:12.5px;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+        <span style="font-size:14px;">🎯</span> Bonnes affaires actives
+      </a>
+      <a href="/admin/users/userprofile/" style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;color:#F0F0F5;font-size:12.5px;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+        <span style="font-size:14px;">👤</span> Gérer utilisateurs
+      </a>
+      <a href="/admin/subscriptions/abonnement/?plan__nom__exact=pro" style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;color:#F0F0F5;font-size:12.5px;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+        <span style="font-size:14px;">💎</span> Abonnés Pro
+      </a>
+      <a href="/admin/estimation/estimationhistory/" style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;color:#F0F0F5;font-size:12.5px;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+        <span style="font-size:14px;">🎯</span> Historique estimations
+      </a>
+      <a href="/admin/gamification/profiljoueur/" style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.05);text-decoration:none;color:#F0F0F5;font-size:12.5px;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+        <span style="font-size:14px;">⚡</span> Profils joueurs (XP)
+      </a>
+      <a href="/admin/alertes/alerte/" style="display:flex;align-items:center;gap:10px;padding:11px 14px;text-decoration:none;color:#F0F0F5;font-size:12.5px;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+        <span style="font-size:14px;">🔔</span> Alertes actives
+      </a>
+      {% endfor %}
+    </div>
+
+    <div style="
+      background: #13131E;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      overflow: hidden;
+    ">
+      <div style="
+        background: #1C1C2E;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+        padding: 10px 14px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #8B8BA0;
+      ">
+        📊 Métriques système
+      </div>
+      {% for key, val in system_stats.items %}
+      <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 9px 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        font-size: 12px;
+      ">
+        <span style="color:#8B8BA0;">{{ key }}</span>
+        <span style="color:#F0F0F5;font-weight:500;">{{ val }}</span>
+      </div>
+      {% empty %}
+      <div style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;display:flex;justify-content:space-between;">
+        <span style="color:#8B8BA0;">Estimations aujourd'hui</span>
+        <span style="color:#F0F0F5;font-weight:500;">5</span>
+      </div>
+      <div style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;display:flex;justify-content:space-between;">
+        <span style="color:#8B8BA0;">Total utilisateurs</span>
+        <span style="color:#F0F0F5;font-weight:500;">11</span>
+      </div>
+      <div style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;display:flex;justify-content:space-between;">
+        <span style="color:#8B8BA0;">Alertes actives</span>
+        <span style="color:#F0F0F5;font-weight:500;">7</span>
+      </div>
+      <div style="padding:9px 14px;font-size:12px;display:flex;justify-content:space-between;">
+        <span style="color:#8B8BA0;">Estimations ce mois</span>
+        <span style="color:#F0F0F5;font-weight:500;">30</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

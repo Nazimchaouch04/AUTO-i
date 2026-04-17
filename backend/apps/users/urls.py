@@ -1,15 +1,8 @@
 from django.urls import path
-from .views import RegisterView, UserProfileView
-
-register_view = RegisterView.as_view({
-    'post': 'register'
-})
-profile_view = UserProfileView.as_view({
-    'get': 'profile',
-    'put': 'profile'
-})
+from .views import RegisterView, MeView, ChangePasswordView
 
 urlpatterns = [
-    path('register/', register_view, name='register'),
-    path('profile/', profile_view, name='profile'),
+    path('register/', RegisterView.as_view()),
+    path('me/', MeView.as_view()),
+    path('change-password/', ChangePasswordView.as_view()),
 ]

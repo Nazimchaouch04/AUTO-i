@@ -481,3 +481,9 @@
 2026-04-11 14:45:26.478 WAT [30756] INSTRUCTION :  INSERT INTO "marketplace_sellerprofile" ("user_id", "company_name", "phone_number", "description", "is_verified", "total_sales", "average_rating", "created_at") VALUES (1, 'Test AutoIntel', '0123456789', '', false, 0, 0, '2026-04-11T13:45:26.477487+00:00'::timestamptz) RETURNING "marketplace_sellerprofile"."id"
 2026-04-11 14:47:32.372 WAT [3524] ERREUR:  la relation « marketplace_sellerprofile » n'existe pas au caractère 13
 2026-04-11 14:47:32.372 WAT [3524] INSTRUCTION :  INSERT INTO "marketplace_sellerprofile" ("user_id", "company_name", "phone_number", "description", "is_verified", "total_sales", "average_rating", "created_at") VALUES (1, 'Test AutoIntel', '0123456789', '', false, 0, 0, '2026-04-11T13:47:32.371374+00:00'::timestamptz) RETURNING "marketplace_sellerprofile"."id"
+2026-04-11 15:06:26.651 WAT [28396] LOG:  processus en tâche de fond « logical replication launcher » (PID 18552) a été arrêté par l'exception 0xC000013A
+2026-04-11 15:06:26.651 WAT [28396] ASTUCE :  Voir le fichier d'en-tête C « ntstatus.h » pour une description de la valeur
+	hexadécimale.
+2026-04-11 15:06:26.651 WAT [28396] LOG:  arrêt des autres processus serveur actifs
+2026-04-11 15:06:26.657 WAT [28396] LOG:  a reçu une demande d'arrêt rapide
+^C

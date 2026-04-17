@@ -10,13 +10,12 @@ from django.utils import timezone
 from apps.annonces.models import Annonce, Vehicule
 
 from .models import (
-    EscrowAccount,
-    LogisticsShipment,
-    MarketplaceEvent,
-    MarketplaceListing,
-    MarketplaceOrder,
-    MarketplacePayment,
-    SellerVerification,
+    Listing,
+    Transaction,
+    SellerProfile,
+    Review,
+    Favorite,
+    Message,
 )
 
 try:

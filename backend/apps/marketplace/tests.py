@@ -5,11 +5,12 @@ from rest_framework.test import APIClient
 from apps.subscriptions.models import Plan
 
 from .models import (
-    EscrowAccount,
-    MarketplaceListing,
-    MarketplaceOrder,
-    MarketplacePayment,
-    SellerVerification,
+    Listing,
+    Transaction,
+    SellerProfile,
+    Review,
+    Favorite,
+    Message,
 )
 
 
