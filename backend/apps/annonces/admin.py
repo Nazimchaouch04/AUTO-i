@@ -62,19 +62,19 @@ class AnnonceAdmin(admin.ModelAdmin):
     vehicule_display.short_description = 'Véhicule'
 
     def km_display(self, obj):
-        return format_html('<span style="color:#8B8BA0">{:,} km</span>', obj.kilometrage)
+        return format_html('<span style="color:#8B8BA0">{} km</span>', f'{obj.kilometrage:,}')
 
     km_display.short_description = 'Km'
 
     def prix_display(self, obj):
-        return format_html('<strong style="color:#F0F0F5">{:,} DA</strong>', int(obj.prix))
+        return format_html('<strong style="color:#F0F0F5">{} DA</strong>', f'{int(obj.prix):,}')
 
     prix_display.short_description = 'Prix'
 
     def est_display(self, obj):
         if not obj.prix_estime:
             return format_html('<span style="color:#55556A">—</span>')
-        return format_html('<span style="color:#8B8BA0">{:,} DA</span>', int(obj.prix_estime))
+        return format_html('<span style="color:#8B8BA0">{} DA</span>', f'{int(obj.prix_estime):,}')
 
     est_display.short_description = 'Estimé'
 
@@ -82,11 +82,12 @@ class AnnonceAdmin(admin.ModelAdmin):
         if obj.ecart_prix is None:
             return format_html('<span style="color:#55556A">—</span>')
         pct = obj.ecart_prix
+        pct_str = ('+' if pct >= 0 else '') + f'{pct:.1f}' + '%'
         if pct <= -5:
-            return format_html('<span class="ai-badge ai-badge-teal">{:+.1f}%</span>', pct)
+            return format_html('<span class="ai-badge ai-badge-teal">{}</span>', pct_str)
         if pct >= 5:
-            return format_html('<span class="ai-badge ai-badge-red">{:+.1f}%</span>', pct)
-        return format_html('<span class="ai-badge ai-badge-amber">{:+.1f}%</span>', pct)
+            return format_html('<span class="ai-badge ai-badge-red">{}</span>', pct_str)
+        return format_html('<span class="ai-badge ai-badge-amber">{}</span>', pct_str)
 
     ecart_display.short_description = 'Écart'
 

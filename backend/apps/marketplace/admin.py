@@ -73,13 +73,13 @@ class SellerProfileAdmin(admin.ModelAdmin):
         if obj.average_rating == 0:
             return format_html('<span style="color:#55556A">—</span>')
         elif obj.average_rating >= 4.5:
-            return format_html('<span class="ai-badge ai-badge-teal">⭐ {:.1f}</span>', obj.average_rating)
+            return format_html('<span class="ai-badge ai-badge-teal">⭐ {}</span>', f'{obj.average_rating:.1f}')
         elif obj.average_rating >= 3.5:
-            return format_html('<span class="ai-badge ai-badge-green">⭐ {:.1f}</span>', obj.average_rating)
+            return format_html('<span class="ai-badge ai-badge-green">⭐ {}</span>', f'{obj.average_rating:.1f}')
         elif obj.average_rating >= 2.5:
-            return format_html('<span class="ai-badge ai-badge-amber">⭐ {:.1f}</span>', obj.average_rating)
+            return format_html('<span class="ai-badge ai-badge-amber">⭐ {}</span>', f'{obj.average_rating:.1f}')
         else:
-            return format_html('<span class="ai-badge ai-badge-red">⭐ {:.1f}</span>', obj.average_rating)
+            return format_html('<span class="ai-badge ai-badge-red">⭐ {}</span>', f'{obj.average_rating:.1f}')
     rating_display.short_description = 'Note'
     
     def verifier_vendeurs(self, request, queryset):
@@ -146,7 +146,7 @@ class ListingAdmin(admin.ModelAdmin):
     vehicle_display.short_description = 'Véhicule'
     
     def price_display(self, obj):
-        return format_html('<span style="color:#F59E0B;font-weight:600">{:,} DA</span>', int(obj.price))
+        return format_html('<span style="color:#F59E0B;font-weight:600">{} DA</span>', f'{int(obj.price):,}')
     price_display.short_description = 'Prix'
     
     def seller_display(self, obj):
@@ -229,7 +229,7 @@ class TransactionAdmin(admin.ModelAdmin):
     seller_display.short_description = 'Vendeur'
     
     def amount_display(self, obj):
-        return format_html('<span style="color:#F59E0B;font-weight:600">{:,} DA</span>', int(obj.total_amount))
+        return format_html('<span style="color:#F59E0B;font-weight:600">{} DA</span>', f'{int(obj.total_amount):,}')
     amount_display.short_description = 'Montant'
     
     def status_display(self, obj):

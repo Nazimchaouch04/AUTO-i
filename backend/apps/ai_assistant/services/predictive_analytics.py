@@ -556,26 +556,22 @@ class PredictiveAnalyticsService:
 
     def _build_queryset(self, filters: Optional[Dict[str, Any]] = None):
         filters = self._clean_filters(filters)
-        base_queryset = Annonce.objects.select_related("vehicule")
+        base_queryset = Annonce.objects.select_related("marque")
 
         active_queryset = base_queryset.filter(est_active=True)
         queryset = active_queryset if active_queryset.exists() else base_queryset
 
         marque = filters.get("marque")
         if marque:
-            queryset = queryset.filter(vehicule__marque__iexact=marque)
+            queryset = queryset.filter(marque__nom__iexact=marque)
 
         marques = filters.get("marques")
         if marques:
-            queryset = queryset.filter(vehicule__marque__in=marques)
+            queryset = queryset.filter(marque__nom__in=marques)
 
         modele = filters.get("modele")
         if modele:
-            queryset = queryset.filter(vehicule__modele__iexact=modele)
-
-        category = filters.get("categorie")
-        if category:
-            queryset = queryset.filter(vehicule__categorie__iexact=category)
+            queryset = queryset.filter(modele__iexact=modele)
 
         carburant = filters.get("carburant")
         if carburant:
@@ -584,10 +580,6 @@ class PredictiveAnalyticsService:
         pays = filters.get("pays")
         if pays:
             queryset = queryset.filter(pays__iexact=pays)
-
-        vehicule_id = filters.get("vehicule_id")
-        if vehicule_id:
-            queryset = queryset.filter(vehicule_id=vehicule_id)
 
         annee_min = self._to_int(filters.get("annee_min"))
         if annee_min:
@@ -693,9 +685,8 @@ class PredictiveAnalyticsService:
                 seasonality_factors[month] = (mean(values) / overall_average) - 1
 
         top_brands = list(
-            recent_queryset.values("vehicule__marque")
+            recent_queryset.values("marque__nom")
             .annotate(
-                marque=Max("vehicule__marque"),
                 listing_count=Count("id"),
                 average_price=Avg("prix"),
             )
@@ -703,7 +694,7 @@ class PredictiveAnalyticsService:
         )
         top_brands_payload = [
             {
-                "marque": item["marque"] or item["vehicule__marque"] or "Inconnu",
+                "marque": item["marque__nom"] or "Inconnu",
                 "listing_count": int(item["listing_count"] or 0),
                 "average_price": round(float(item["average_price"] or 0.0), 2),
             }

@@ -51,6 +51,7 @@ def envoyer_newsletter_hebdomadaire(user_id):
         }
 
         subject = f"🚗 AutoIntel - Votre hebdo du {timezone.now().strftime('%d/%m/%Y')}"
+        
         html_message = render_to_string('notifications/newsletter_hebdo.html', context)
         plain_message = strip_tags(html_message)
 

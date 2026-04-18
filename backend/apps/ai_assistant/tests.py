@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.annonces.models import Annonce
+from apps.annonces.models import Annonce, Marque
 from apps.subscriptions.models import Plan
 
 from .models import UserProfileAnalysis
@@ -26,25 +26,21 @@ class PredictiveAnalyticsTest(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
-        self.clio = Vehicule.objects.create(
-            marque='Renault',
-            modele='Clio',
-            categorie='citadine',
-        )
-        self.captur = Vehicule.objects.create(
-            marque='Renault',
-            modele='Captur',
-            categorie='suv',
+        self.marque_renault, _ = Marque.objects.get_or_create(
+            nom='Renault',
+            defaults={'slug': 'renault'},
         )
 
         self._create_market_series(
-            vehicule=self.clio,
+            marque=self.marque_renault,
+            modele='Clio',
             prices=[9800, 10100, 10500, 11050, 11400, 11850],
             carburant='essence',
             pays='FR',
         )
         self._create_market_series(
-            vehicule=self.captur,
+            marque=self.marque_renault,
+            modele='Captur',
             prices=[15600, 15850, 16100, 16500],
             carburant='hybride',
             pays='FR',
@@ -58,11 +54,12 @@ class PredictiveAnalyticsTest(TestCase):
             preferences_carburant=['essence'],
         )
 
-    def _create_market_series(self, vehicule, prices, carburant, pays):
+    def _create_market_series(self, marque, modele, prices, carburant, pays):
         now = timezone.now()
         for index, price in enumerate(prices):
             annonce = Annonce.objects.create(
-                vehicule=vehicule,
+                marque=marque,
+                modele=modele,
                 annee=2020 + min(index, 3),
                 kilometrage=25000 + (index * 5000),
                 carburant=carburant,
@@ -70,12 +67,10 @@ class PredictiveAnalyticsTest(TestCase):
                 prix=price,
                 pays=pays,
                 est_bonne_affaire=index % 2 == 0,
-                url_originale=f'https://example.com/{vehicule.id}/{index}',
             )
             target_date = now - timedelta(days=(len(prices) - index) * 30)
             Annonce.objects.filter(pk=annonce.pk).update(
                 date_publication=target_date,
-                date_collecte=target_date,
                 created_at=target_date,
                 updated_at=target_date,
             )

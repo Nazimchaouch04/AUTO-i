@@ -20,8 +20,10 @@ CACHES = {
     }
 }
 
-# Session en mémoire en dev (pas de Redis requis)
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
-# Désactiver WhiteNoise en dev (fichiers servis directement)
+# Retirer WhiteNoise du MIDDLEWARE en dev (non installe / non requis)
+MIDDLEWARE = [m for m in MIDDLEWARE if 'whitenoise' not in m]
+
+# Fichiers statiques servis directement par Django en dev
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'

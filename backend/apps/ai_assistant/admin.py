@@ -188,7 +188,7 @@ class UserProfileAnalysisAdmin(admin.ModelAdmin):
     
     def budget_display(self, obj):
         if obj.budget_max:
-            return format_html('<span style="color:#F59E0B">{:,} DA</span>', int(obj.budget_max))
+            return format_html('<span style="color:#F59E0B">{} DA</span>', f'{int(obj.budget_max):,}')
         return '-'
     budget_display.short_description = 'Budget max'
     
@@ -338,6 +338,11 @@ class MarketInsightAdmin(admin.ModelAdmin):
 
 @admin.register(IntentAnalysis)
 class IntentAnalysisAdmin(admin.ModelAdmin):
+    list_display = ('message_display', 'intent_display', 'sentiment_display', 'urgency_display', 'created_at')
+    list_filter = ('intent_principale', 'sentiment', 'niveau_urgence')
+    search_fields = ('message__content', 'message__conversation__user__username')
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at', 'message')
     list_display = ('message_display', 'intent_display', 'sentiment_display', 'urgency_display', 'created_at')
     list_filter = ('intent_principale', 'sentiment', 'niveau_urgence')
     search_fields = ('message__content', 'message__conversation__user__username')

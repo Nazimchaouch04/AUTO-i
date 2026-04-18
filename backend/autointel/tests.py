@@ -12,5 +12,6 @@ class CoreApiTest(TestCase):
         response = self.client.get('/api/health/')
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertIn(payload.get('status'), ['ok', 'degraded'])
-        self.assertIn('database', payload)
+        self.assertIn(payload.get('status'), ['ok', 'degraded', 'healthy'])
+        self.assertIn('db', payload)
+

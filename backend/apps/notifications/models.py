@@ -55,6 +55,7 @@ class NotificationHistory(models.Model):
     contenu = models.TextField()
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='pending')
     erreur_message = models.TextField(blank=True, null=True)
+    is_lu = models.BooleanField(default=False)
     sent_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

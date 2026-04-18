@@ -109,7 +109,7 @@ class DashboardViewSet(viewsets.ViewSet):
         prix_par_marque = []
         marques_data = (
             Annonce.objects.filter(date_publication__gte=start_date)
-            .values('marque__nom')
+            .values('marque')
             .annotate(
                 count=Count('id'),
                 prix_avg=Avg('prix')
@@ -119,7 +119,7 @@ class DashboardViewSet(viewsets.ViewSet):
 
         for item in marques_data:
             prix_par_marque.append({
-                'marque': item['marque__nom'] or 'Autre',
+                'marque': item['marque'] or 'Autre',
                 'prix': round(item['prix_avg'] or 0, 0),
                 'annonces': item['count']
             })
@@ -196,7 +196,6 @@ class DashboardViewSet(viewsets.ViewSet):
                 est_bonne_affaire=True,
                 date_publication__gte=start_date
             )
-            .select_related('vehicule')
             .order_by('-ecart_prix')[:6]
         )
 
@@ -207,8 +206,8 @@ class DashboardViewSet(viewsets.ViewSet):
 
             deals.append({
                 'id': annonce.id,
-                'marque': annonce.vehicule.marque if annonce.vehicule else 'Unknown',
-                'model': annonce.vehicule.modele if annonce.vehicule else 'Unknown',
+                'marque': annonce.marque,
+                'model': annonce.modele,
                 'annee': annonce.annee,
                 'prix': annonce.prix,
                 'prixEstime': annonce.prix_estime or int(annonce.prix * 1.2),
@@ -321,16 +320,16 @@ class DashboardViewSet(viewsets.ViewSet):
         }
 
         # Prix par marque (top 10)
-        prix_par_marque = list(
+        prix_par_marque_data = (
             Annonce.objects.filter(date_publication__gte=start_date)
-            .values('marque__nom')
-            .annotate(
-                marque=models.F('marque__nom'),
-                count=Count('id'),
-                prix_moyen=Avg('prix')
-            )
+            .values('marque')
+            .annotate(count=Count('id'), prix_moyen=Avg('prix'))
             .order_by('-count')[:10]
         )
+        prix_par_marque = [
+            {'marque': item['marque'], 'count': item['count'], 'prix_moyen': item['prix_moyen']}
+            for item in prix_par_marque_data
+        ]
 
         # Répartition carburant
         repartition_carburant = list(
@@ -357,7 +356,7 @@ class DashboardViewSet(viewsets.ViewSet):
                 est_bonne_affaire=True
             ).values(
                 'id', 'prix', 'prix_estime', 'ecart_prix',
-                'marque__nom', 'modele', 'annee'
+                'marque', 'modele', 'annee'
             ).order_by('-date_publication')[:6]
         )
 

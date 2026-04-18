@@ -362,7 +362,7 @@ Market Insights générés:
 ---
 
 ## Conclusion
-
+    
 L'assistant IA conversationnel AutoIntel développé est **complètement fonctionnel** et répond à toutes les exigences :
 
 - [x] **Analyse des besoins utilisateurs** avec NLP avancé

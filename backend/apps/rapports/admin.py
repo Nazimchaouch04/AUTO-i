@@ -87,7 +87,7 @@ class RapportPDFAdmin(admin.ModelAdmin):
     status_display.short_description = 'Statut'
     
     def price_display(self, obj):
-        return format_html('<span style="color:#F59E0B;font-weight:600">{:,} DA</span>', int(obj.prix))
+        return format_html('<span style="color:#F59E0B;font-weight:600">{} DA</span>', f'{int(obj.prix):,}')
     price_display.short_description = 'Prix'
     
     def validity_display(self, obj):
@@ -256,7 +256,7 @@ class HistoriqueGenerationAdmin(admin.ModelAdmin):
         if obj.temps_execution:
             total_seconds = obj.temps_execution.total_seconds()
             if total_seconds < 60:
-                return format_html('<span style="color:#8B8BA0">{:.1f}s</span>', total_seconds)
+                return format_html('<span style="color:#8B8BA0">{}s</span>', f'{total_seconds:.1f}')
             else:
                 minutes = int(total_seconds // 60)
                 seconds = int(total_seconds % 60)

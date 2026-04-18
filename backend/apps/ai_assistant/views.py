@@ -551,9 +551,8 @@ class PredictionPrixView(APIView):
 
             return Response({
                 'vehicule': {
-                    'id': getattr(sample_annonce, 'vehicule_id', filters.get('vehicule_id')),
-                    'marque': sample_annonce.vehicule.marque if sample_annonce else filters.get('marque'),
-                    'modele': sample_annonce.vehicule.modele if sample_annonce else filters.get('modele'),
+                    'marque': (sample_annonce.marque.nom if sample_annonce else None) or filters.get('marque'),
+                    'modele': (sample_annonce.modele if sample_annonce else None) or filters.get('modele'),
                     'prix_actuel': report['price_forecast']['current_average_price']
                 },
                 'predictions': predictions_payload,

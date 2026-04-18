@@ -486,4 +486,18 @@
 	hexadécimale.
 2026-04-11 15:06:26.651 WAT [28396] LOG:  arrêt des autres processus serveur actifs
 2026-04-11 15:06:26.657 WAT [28396] LOG:  a reçu une demande d'arrêt rapide
-^C
+^C2026-04-18 20:20:38.279 WAT [34268] LOG:  démarrage de PostgreSQL 15.7, compiled by Visual C++ build 1938, 64-bit
+2026-04-18 20:20:38.285 WAT [34268] LOG:  en écoute sur IPv6, adresse « ::1 », port 5433
+2026-04-18 20:20:38.285 WAT [34268] LOG:  en écoute sur IPv4, adresse « 127.0.0.1 », port 5433
+2026-04-18 20:20:38.336 WAT [38072] LOG:  le système de bases de données a été interrompu ; dernier lancement connu à 2026-04-11 14:42:45 WAT
+2026-04-18 20:20:39.655 WAT [34268] LOG:  a reçu une demande d'arrêt rapide
+2026-04-18 20:20:44.657 WAT [38072] LOG:  n'a pas pu ouvrir le fichier « ./logfile » : violation du partage
+2026-04-18 20:20:44.657 WAT [38072] DÉTAIL:  Continue à tenter pendant 30 secondes.
+2026-04-18 20:20:44.657 WAT [38072] ASTUCE :  Vous pouvez avoir un antivirus, un outil de sauvegarde ou un logiciel
+	similaire interférant avec le système de bases de données.
+2026-04-18 20:21:10.798 WAT [38072] LOG:  syncing data directory (fsync), elapsed time: 32.46 s, current path: ./pg_commit_ts
+2026-04-18 20:21:10.808 WAT [38072] LOG:  le système de bases de données n'a pas été arrêté proprement ; restauration
+	automatique en cours
+2026-04-18 20:21:10.812 WAT [38072] LOG:  la ré-exécution commence à 0/345FB08
+2026-04-18 20:21:10.815 WAT [2480] LOG:  arrêt en cours
+2026-04-18 20:21:10.822 WAT [34268] LOG:  le système de base de données est arrêté

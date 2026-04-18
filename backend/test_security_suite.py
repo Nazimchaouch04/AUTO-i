@@ -33,7 +33,7 @@ class SecurityVulnerabilityTest(APITestCase):
     
     def test_sql_injection_protection(self):
         """Test la protection contre l'injection SQL"""
-        print("🔍 Test: Protection contre l'injection SQL...")
+        print("[SEARCH] Test: Protection contre l'injection SQL...")
         
         malicious_payloads = [
             "'; DROP TABLE users; --",
@@ -48,11 +48,11 @@ class SecurityVulnerabilityTest(APITestCase):
             self.assertNotEqual(response.status_code, 500)
             self.assertIn(response.status_code, [200, 400, 404])
         
-        print("✅ Protection SQL injection OK")
+        print("[OK] Protection SQL injection OK")
     
     def test_xss_protection(self):
         """Test la protection contre XSS"""
-        print("🔍 Test: Protection contre XSS...")
+        print("[SEARCH] Test: Protection contre XSS...")
         
         xss_payloads = [
             "<script>alert('XSS')</script>",
@@ -80,11 +80,11 @@ class SecurityVulnerabilityTest(APITestCase):
                 self.assertNotIn('<script>', response_content)
                 self.assertNotIn('javascript:', response_content)
         
-        print("✅ Protection XSS OK")
+        print("[OK] Protection XSS OK")
     
     def test_csrf_protection(self):
         """Test la protection CSRF"""
-        print("🔍 Test: Protection CSRF...")
+        print("[SEARCH] Test: Protection CSRF...")
         
         # Les requêtes POST sans token CSRF devraient être rejetées
         response = self.client.post('/api/auth/login/', {
@@ -96,11 +96,11 @@ class SecurityVulnerabilityTest(APITestCase):
         # mais on vérifie que l'authentification fonctionne correctement
         self.assertIn(response.status_code, [200, 400, 405])
         
-        print("✅ Protection CSRF vérifiée")
+        print("[OK] Protection CSRF vérifiée")
     
     def test_authentication_bypass_attempts(self):
         """Test les tentatives de contournement d'authentification"""
-        print("🔍 Test: Tentatives de contournement d'authentification...")
+        print("[SEARCH] Test: Tentatives de contournement d'authentification...")
         
         protected_endpoints = [
             '/api/annonces/mes_favoris/',
@@ -115,13 +115,13 @@ class SecurityVulnerabilityTest(APITestCase):
                 self.assertIn(response.status_code, [401, 403, 404])
             except Exception as e:
                 # Erreur technique - l'endpoint n'existe probablement pas
-                print(f"ℹ️ Endpoint {endpoint} non disponible (normal)")
+                print(f"[INFO] Endpoint {endpoint} non disponible (normal)")
         
-        print("✅ Protection authentification OK")
+        print("[OK] Protection authentification OK")
     
     def test_rate_limiting(self):
         """Test la limitation de débit (rate limiting)"""
-        print("🔍 Test: Rate limiting...")
+        print("[SEARCH] Test: Rate limiting...")
         
         # Faire plusieurs requêtes rapidement
         responses = []
@@ -134,13 +134,13 @@ class SecurityVulnerabilityTest(APITestCase):
         
         # Si le rate limiting est activé, certaines requêtes pourraient être bloquées
         if 429 in responses:
-            print("⚠️ Rate limiting détecté (429 responses)")
+            print("[WARN] Rate limiting détecté (429 responses)")
         
-        print("✅ Rate limiting vérifié")
+        print("[OK] Rate limiting vérifié")
     
     def test_sensitive_data_exposure(self):
         """Test l'exposition de données sensibles"""
-        print("🔍 Test: Exposition de données sensibles...")
+        print("[SEARCH] Test: Exposition de données sensibles...")
         
         # Vérifier que les mots de passe ne sont pas exposés
         response = self.client.post('/api/auth/login/', {
@@ -154,11 +154,11 @@ class SecurityVulnerabilityTest(APITestCase):
             self.assertNotIn('password', str(data))
             self.assertNotIn('SecurePass123', str(data))
         
-        print("✅ Protection données sensibles OK")
+        print("[OK] Protection données sensibles OK")
     
     def test_file_upload_security(self):
         """Test la sécurité des uploads de fichiers"""
-        print("🔍 Test: Sécurité upload de fichiers...")
+        print("[SEARCH] Test: Sécurité upload de fichiers...")
         
         try:
             # Tester l'upload de fichiers malveillants
@@ -178,13 +178,13 @@ class SecurityVulnerabilityTest(APITestCase):
                 self.assertNotIn(response.status_code, [500])
         except Exception as e:
             # L'endpoint d'upload n'existe probablement pas
-            print("ℹ️ Endpoint upload non implémenté (normal)")
+            print("[INFO] Endpoint upload non implémenté (normal)")
         
-        print("✅ Sécurité upload fichiers vérifiée")
+        print("[OK] Sécurité upload fichiers vérifiée")
     
     def test_cors_configuration(self):
         """Test la configuration CORS"""
-        print("🔍 Test: Configuration CORS...")
+        print("[SEARCH] Test: Configuration CORS...")
         
         # Test avec une origine non autorisée
         response = self.client.get('/api/annonces/', HTTP_ORIGIN='https://malicious-site.com')
@@ -195,11 +195,11 @@ class SecurityVulnerabilityTest(APITestCase):
             # Ne devrait pas autoriser n'importe quelle origine
             self.assertNotEqual(allowed_origins, '*')
         
-        print("✅ Configuration CORS vérifiée")
+        print("[OK] Configuration CORS vérifiée")
     
     def test_input_validation(self):
         """Test la validation des entrées"""
-        print("🔍 Test: Validation des entrées...")
+        print("[SEARCH] Test: Validation des entrées...")
         
         # Test avec des données invalides
         invalid_data = {
@@ -214,7 +214,7 @@ class SecurityVulnerabilityTest(APITestCase):
         # Les données invalides devraient être rejetées
         self.assertIn(response.status_code, [400, 403, 422])
         
-        print("✅ Validation des entrées OK")
+        print("[OK] Validation des entrées OK")
 
 
 class ConfigurationSecurityTest(TestCase):
@@ -222,20 +222,20 @@ class ConfigurationSecurityTest(TestCase):
     
     def test_debug_mode_disabled(self):
         """Test que le mode DEBUG est désactivé en production"""
-        print("🔍 Test: Mode DEBUG...")
+        print("[SEARCH] Test: Mode DEBUG...")
         
         from django.conf import settings
         
         # En production, DEBUG devrait être False
         if not settings.DEBUG:
             self.assertFalse(settings.DEBUG)
-            print("✅ Mode DEBUG désactivé")
+            print("[OK] Mode DEBUG désactivé")
         else:
-            print("⚠️ Mode DEBUG activé (acceptable en développement)")
+            print("[WARN] Mode DEBUG activé (acceptable en développement)")
     
     def test_secure_settings(self):
         """Test les paramètres de sécurité"""
-        print("🔍 Test: Paramètres de sécurité...")
+        print("[SEARCH] Test: Paramètres de sécurité...")
         
         from django.conf import settings
         
@@ -248,13 +248,13 @@ class ConfigurationSecurityTest(TestCase):
         
         for setting_name, value in security_checks.items():
             if value:
-                print(f"✅ {setting_name}: {value}")
+                print(f"[OK] {setting_name}: {value}")
             else:
-                print(f"⚠️ {setting_name}: {value} (recommandé)")
+                print(f"[WARN] {setting_name}: {value} (recommandé)")
     
     def test_database_security(self):
         """Test la sécurité de la base de données"""
-        print("🔍 Test: Sécurité base de données...")
+        print("[SEARCH] Test: Sécurité base de données...")
         
         from django.conf import settings
         
@@ -265,9 +265,9 @@ class ConfigurationSecurityTest(TestCase):
             # Le mot de passe ne devrait pas être évident
             self.assertNotIn('password', db_config['PASSWORD'].lower())
             self.assertNotIn('123', db_config['PASSWORD'])
-            print("✅ Configuration base de données sécurisée")
+            print("[OK] Configuration base de données sécurisée")
         else:
-            print("ℹ️ Base de données sans mot de passe (SQLite)")
+            print("[INFO] Base de données sans mot de passe (SQLite)")
 
 
 def run_security_tests():
@@ -291,9 +291,9 @@ def run_security_tests():
     
     print("=" * 60)
     if result == 0:
-        print("✅ Tous les tests de sécurité ont réussi!")
+        print("[OK] Tous les tests de sécurité ont réussi!")
     else:
-        print(f"⚠️ {result} test(s) de sécurité ont échoué")
+        print(f"[WARN] {result} test(s) de sécurité ont échoué")
     
     return result
 

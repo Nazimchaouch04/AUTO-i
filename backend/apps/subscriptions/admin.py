@@ -42,7 +42,7 @@ class PlanAdmin(admin.ModelAdmin):
     def price_display(self, obj):
         if obj.prix_mensuel == 0:
             return format_html('<span style="color:#00D4AA;font-weight:600">GRATUIT</span>')
-        return format_html('<span style="color:#F59E0B;font-weight:600">{:,} DA/mois</span>', int(obj.prix_mensuel))
+        return format_html('<span style="color:#F59E0B;font-weight:600">{} DA/mois</span>', f'{int(obj.prix_mensuel):,}')
     price_display.short_description = 'Prix'
     
     def features_display(self, obj):
