@@ -69,3 +69,14 @@ class ChangePasswordView(APIView):
         user.set_password(new_pw)
         user.save()
         return Response({'message': 'Mot de passe modifié.'})
+
+
+class UserListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        users = User.objects.all()
+        return Response([
+            {'id': u.id, 'username': u.username, 'email': u.email}
+            for u in users
+        ])

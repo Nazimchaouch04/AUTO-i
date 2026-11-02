@@ -47,6 +47,8 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'apps.core.middleware.SecurityHeadersMiddleware',  # Headers de sécurité
+    'apps.core.middleware.SlowRequestLogMiddleware',  # Logging des requêtes lentes
 ]
 
 ROOT_URLCONF = 'autointel.urls'
@@ -149,13 +151,30 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 12,
+    # Rate limiting
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',      # 100 requêtes/heure pour anonymes
+        'user': '1000/hour',     # 1000 requêtes/heure pour authentifiés
+        'login': '5/hour',       # 5 tentatives de login/heure
+        'estimation': '20/hour', # 20 estimations/heure
+    }
 }
 
-# JWT
+# JWT - Sécurité renforcée
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # 15 min au lieu de 1h
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),    # 1 jour au lieu de 7 jours
     'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
 # CORS
@@ -241,7 +260,14 @@ if not DEBUG:
     try:
         import whitenoise
         MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-        STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+        STORAGES = {
+            "default": {
+                "BACKEND": "django.core.files.storage.FileSystemStorage",
+            },
+            "staticfiles": {
+                "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+            },
+        }
     except ImportError:
         pass  # WhiteNoise non disponible
 

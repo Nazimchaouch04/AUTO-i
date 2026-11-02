@@ -106,3 +106,29 @@ celerybeat.pid
 
 # Redis dump
 dump.rdb
+
+# Temporary files
+*.pid
+tmp*
+*.tmp
+
+# Test files
+test_*.py
+*_test.py
+test_*.html
+test_*.js
+
+# Build logs
+*_out.log
+*_err.log
+build_log.txt
+
+# Multiple SQLite databases
+default_*.sqlite3
+
+# Documentation drafts (keep only final docs)
+*_REPORT.md
+*_SUMMARY.md
+*_STATUS.md
+rapport.md
+PROJET_RAPPORT.md

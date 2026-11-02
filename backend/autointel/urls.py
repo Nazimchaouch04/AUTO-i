@@ -9,6 +9,7 @@ from apps.users.auth import EmailOrUsernameTokenObtainPairView
 from .views import api_health, api_root
 
 urlpatterns = [
+    path('', api_root),
     path('api/', api_root),
     path('api/health/', api_health),
     path('admin/', admin.site.urls),
@@ -31,4 +32,5 @@ urlpatterns = [
     path('api/marketplace/', include('apps.marketplace.urls')),
     path('api/notifications/', include('apps.notifications.urls')),
     path('api/rapports/', include('apps.rapports.urls')),
+    path('api/scraping/', include('apps.scraping.urls')),
 ]

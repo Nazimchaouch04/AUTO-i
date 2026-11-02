@@ -1,35 +1,42 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from django.contrib.auth.password_validation import validate_password
 from .models import UserProfile
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
-    password2 = serializers.CharField(write_only=True)
+    password_confirm = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'password2']
+        fields = ['username', 'email', 'password', 'password_confirm']
 
     def validate_email(self, value):
         if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError("Cet email est déjà utilisé.")
+            raise serializers.ValidationError("Cet email est deja utilise.")
         return value.lower()
 
     def validate(self, data):
-        if data['password'] != data['password2']:
+        password = data.get('password', '')
+        password_confirm = data.get('password_confirm', password)
+        if not (password == password_confirm):
             raise serializers.ValidationError(
-                {"password2": "Les mots de passe ne correspondent pas."})
+                {'password': 'Les mots de passe ne correspondent pas.'}
+            )
+        username = data.get('username', '')
+        if User.objects.filter(username__iexact=username).exists():
+            raise serializers.ValidationError(
+                {'username': "Ce nom d'utilisateur est deja pris."}
+            )
+        data.pop('password_confirm', None)
         return data
 
     def create(self, validated_data):
-        validated_data.pop('password2')
-        user = User.objects.create_user(
+        return User.objects.create_user(
             username=validated_data['username'],
-            email=validated_data['email'],
+            email=validated_data.get('email', ''),
             password=validated_data['password'],
         )
-        return user
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

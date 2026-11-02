@@ -117,36 +117,87 @@ class ModeleEstimationPrix:
         return {'mae': round(mae), 'r2': round(r2, 3), 'n_samples': len(df)}
 
     def charger(self):
-        if MODEL_PATH.exists() and ENCODERS_PATH.exists():
-            self.model = joblib.load(MODEL_PATH)
-            self.encoders = joblib.load(ENCODERS_PATH)
-            self.is_trained = True
-            return True
+        """Charge le modèle depuis le disque."""
+        if MODEL_PATH.exists():
+            try:
+                self.model = joblib.load(MODEL_PATH)
+                self.encoders = joblib.load(ENCODERS_PATH)
+                self.is_trained = True
+                return True
+            except Exception as e:
+                print(f"Erreur chargement modèle: {e}")
+                print("Utilisation de l'estimation de secours basée sur les règles")
+                # Ne pas retourner False, on utilisera l'estimation de secours
+                return False
         return False
 
     def estimer(self, marque, annee, kilometrage, carburant, boite, puissance, pays):
+        # Essayer de charger/entraîner le modèle ML
         if not self.is_trained:
             if not self.charger():
-                self.entrainer()
-        df = pd.DataFrame([{
-            'marque': marque, 'annee': annee,
-            'kilometrage': kilometrage, 'carburant': carburant,
-            'boite': boite, 'puissance': puissance or 100, 'pays': pays
-        }])
-        X = self.preparer_features(df)
-        prix = float(self.model.predict(X)[0])
-        feature_names = ['Âge', 'Kilométrage (log)', 'Km/an',
-                         'Puissance', 'Marque', 'Carburant', 'Boîte', 'Pays']
-        importances = self.model.feature_importances_
-        facteurs = []
-        for name, imp in sorted(zip(feature_names, importances), key=lambda x: x[1], reverse=True)[:3]:
-            facteurs.append({'label': name, 'poids': round(imp * 100, 1)})
+                try:
+                    self.entrainer()
+                except Exception as e:
+                    print(f"Erreur entraînement modèle: {e}")
+                    print("Utilisation de l'estimation de secours")
+                    return self.estimer_secours(marque, annee, kilometrage, carburant, boite, puissance, pays)
+        
+        # Si le modèle est chargé, essayer de l'utiliser
+        try:
+            df = pd.DataFrame([{
+                'marque': marque, 'annee': annee,
+                'kilometrage': kilometrage, 'carburant': carburant,
+                'boite': boite, 'puissance': puissance or 100, 'pays': pays
+            }])
+            X = self.preparer_features(df)
+            prix = float(self.model.predict(X)[0])
+            feature_names = ['Âge', 'Kilométrage (log)', 'Km/an',
+                             'Puissance', 'Marque', 'Carburant', 'Boîte', 'Pays']
+            importances = self.model.feature_importances_
+            facteurs = []
+            for name, imp in sorted(zip(feature_names, importances), key=lambda x: x[1], reverse=True)[:3]:
+                facteurs.append({'label': name, 'poids': round(imp * 100, 1)})
+            return {
+                'prix_estime': round(prix / 100) * 100,
+                'fourchette_basse': round(prix * 0.87 / 100) * 100,
+                'fourchette_haute': round(prix * 1.13 / 100) * 100,
+                'fiabilite': 'haute' if prix > 3000 else 'moyenne',
+                'facteurs': facteurs,
+            }
+        except Exception as e:
+            print(f"Erreur prédiction ML: {e}")
+            print("Utilisation de l'estimation de secours")
+            return self.estimer_secours(marque, annee, kilometrage, carburant, boite, puissance, pays)
+
+    def estimer_secours(self, marque, annee, kilometrage, carburant, boite, puissance, pays):
+        """Estimation basée sur des règles simples si le ML échoue."""
+        prix_base = MARQUES_BASE_PRIX.get(marque.capitalize(), 15000)
+        age = 2025 - annee
+        
+        # Ajustement selon l'âge
+        prix = prix_base * max(0.25, 1 - age * 0.065)
+        
+        # Ajustement selon le kilométrage
+        prix *= max(0.45, 1 - kilometrage / 350000)
+        
+        # Ajustement selon le carburant
+        prix *= {'electrique': 1.18, 'hybride': 1.10,
+                 'essence': 1.0, 'diesel': 0.96}.get(carburant.lower(), 1.0)
+        
+        # Ajustement selon la boîte
+        prix *= 1.05 if boite == 'automatique' else 1.0
+        
         return {
             'prix_estime': round(prix / 100) * 100,
-            'fourchette_basse': round(prix * 0.87 / 100) * 100,
-            'fourchette_haute': round(prix * 1.13 / 100) * 100,
-            'fiabilite': 'haute' if prix > 3000 else 'moyenne',
-            'facteurs': facteurs,
+            'fourchette_basse': round(prix * 0.85 / 100) * 100,
+            'fourchette_haute': round(prix * 1.15 / 100) * 100,
+            'fiabilite': 'moyenne',
+            'facteurs': [
+                {'label': 'Marque', 'poids': 35},
+                {'label': 'Âge', 'poids': 30},
+                {'label': 'Kilométrage', 'poids': 25}
+            ],
+            'method': 'rule_based'
         }
 
 _modele = ModeleEstimationPrix()

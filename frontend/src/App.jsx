@@ -8,6 +8,7 @@ import AuthLayout from './layouts/AuthLayout';
 
 // Public
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const LegalPage = lazy(() => import('./pages/LegalPage'));
 
 // Auth
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
@@ -113,6 +114,7 @@ export default function App() {
             path="/"
             element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
           />
+          <Route path="/legal" element={<LegalPage />} />
 
           {/* Auth */}
           <Route element={<AuthLayout />}>

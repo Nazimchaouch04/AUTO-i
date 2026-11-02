@@ -7,7 +7,7 @@ echo.
 :: Lancer le Backend Django (port 8000)
 echo [1/2] Lancement du Backend Django sur http://127.0.0.1:8000 ...
 cd /d "C:\Users\PC DZ\Desktop\AUTO-P\backend"
-start "Backend Django" cmd /k "python manage.py runserver 0.0.0.0:8000"
+start "Backend Django" cmd /k "..\.venv\Scripts\activate && python manage.py runserver 0.0.0.0:8000"
 
 :: Attendre 3 secondes
 ping 127.0.0.1 -n 4 > nul
